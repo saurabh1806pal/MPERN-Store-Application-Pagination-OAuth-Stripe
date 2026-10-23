@@ -1,28 +1,28 @@
 import express from 'express';
 import cors from 'cors';
-
 import { prisma } from './config/prisma.js';
 import mongoose from 'mongoose';
-
-
-
-
-
 const app = express();
+
+// Local Routes import
+import productRoutes from './routes/productRoutes.js';
+
+
 app.use(cors({
     origin: process.env.CLIENT_URL,
     credentials: true
-}))
+}));
 
 app.use(express.json());
 
+// Check if the API is working
 app.get("/api/health", (req, res) => {
     res.status(200).json({ 
         success: true,
         message: "Server is running" });
 });
 
-
+// Check if the databases are connected (MongoBD and PostgreSQL) and return their status
 app.get("/api/health/db", async (req, res) => {
     let postgres = "disconnected";
     let mongodb = "disconnected";
@@ -48,5 +48,8 @@ app.get("/api/health/db", async (req, res) => {
         }
     });
 })
+
+// Use the product routes
+app.use("/api/products", productRoutes);
 
 export default app;
