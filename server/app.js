@@ -6,6 +6,7 @@ const app = express();
 
 // Local Routes import
 import productRoutes from './routes/productRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 
 app.use(cors({
@@ -49,7 +50,11 @@ app.get("/api/health/db", async (req, res) => {
     });
 })
 
+// Use the auth routes
+app.use("/api/auth", authRoutes);
+
 // Use the product routes
 app.use("/api/products", productRoutes);
+
 
 export default app;
