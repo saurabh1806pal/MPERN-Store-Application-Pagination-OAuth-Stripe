@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { prisma } from './config/prisma.js';
 import mongoose from 'mongoose';
+import cookieParser from 'cookie-parser';
 const app = express();
 
 // Local Routes import
@@ -14,7 +15,9 @@ app.use(cors({
     credentials: true
 }));
 
+// Middleware to parse JSON and cookies
 app.use(express.json());
+app.use(cookieParser());
 
 // Check if the API is working
 app.get("/api/health", (req, res) => {
