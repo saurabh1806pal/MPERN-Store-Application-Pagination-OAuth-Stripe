@@ -252,3 +252,20 @@ export const getMe = async ( req, res ) => {
     })
   }
 }
+
+// Logout User
+
+export const logoutUser = async (req, res) => {
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Logout Successful"
+  })
+
+}

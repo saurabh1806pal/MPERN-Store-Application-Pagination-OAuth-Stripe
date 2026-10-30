@@ -1,5 +1,9 @@
 import jwt from "jsonwebtoken";
 
+
+
+// This middleware function is for the Authentication of the user using JWT token stored in cookies. 
+// It checks for the presence of a valid JWT token in the request cookies, verifies it, and attaches the decoded user information to the request object for further processing in subsequent middleware or route handlers.
 export const authenticateUser = (req, res, next) => {
   const token = req.cookies?.accessToken;
 
@@ -27,3 +31,4 @@ export const authenticateUser = (req, res, next) => {
     });
   }
 };
+

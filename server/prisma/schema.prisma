@@ -12,6 +12,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String?
@@ -24,6 +29,9 @@ model User {
   emailVerified                  Boolean   @default(false)
   emailVerificationTokenHash     String?   @unique
   emailVerificationTokenExpiresAt DateTime?
+
+  // Role 
+  role UserRole @default(CUSTOMER)
 
   // Google authentication
   googleId  String?  @unique

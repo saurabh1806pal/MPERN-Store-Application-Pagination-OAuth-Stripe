@@ -1,63 +1,93 @@
-import express from 'express';
-import cors from 'cors';
-import { prisma } from './config/prisma.js';
-import mongoose from 'mongoose';
-import cookieParser from 'cookie-parser';
+
+import express from "express";
+import cors from "cors";
+import session from "express-session";
+import cookieParser from "cookie-parser";
+import mongoose from "mongoose";
+import { prisma } from "./config/prisma.js";
+import passport from "./config/passport.js";
+
+// Local routes
+import productRoutes from "./routes/productRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js"
+
 const app = express();
 
-// Local Routes import
-import productRoutes from './routes/productRoutes.js';
-import authRoutes from './routes/authRoutes.js';
-
-
-app.use(cors({
+// CORS
+app.use(
+  cors({
     origin: process.env.CLIENT_URL,
-    credentials: true
-}));
+    credentials: true,
+  })
+);
 
-// Middleware to parse JSON and cookies
+// Parse request bodies and cookies
 app.use(express.json());
 app.use(cookieParser());
 
-// Check if the API is working
+// Temporary session for OAuth state validation.
+// The default MemoryStore is suitable only for local development.
+if (!process.env.OAUTH_SESSION_SECRET) {
+  throw new Error("OAUTH_SESSION_SECRET is missing from server/.env");
+}
+
+app.use(
+  session({
+    name: "oauth.sid",
+    secret: process.env.OAUTH_SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 10 * 60 * 1000,
+    },
+  })
+);
+
+// Initialize Passport after the session middleware
+app.use(passport.initialize());
+
+// Health check
 app.get("/api/health", (req, res) => {
-    res.status(200).json({ 
-        success: true,
-        message: "Server is running" });
+  res.status(200).json({
+    success: true,
+    message: "Server is running",
+  });
 });
 
-// Check if the databases are connected (MongoBD and PostgreSQL) and return their status
+// Database health check
 app.get("/api/health/db", async (req, res) => {
-    let postgres = "disconnected";
-    let mongodb = "disconnected";
+  let postgres = "disconnected";
+  let mongodb = "disconnected";
 
-    try{
-        await prisma.$queryRaw`SELECT 1`;
-        postgres = "connected";
-    }catch(error){
-        console.error("PostgreSQL connection error: fileName: app.js", error);
-    }
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    postgres = "connected";
+  } catch (error) {
+    console.error("PostgreSQL connection error in app.js:", error);
+  }
 
-    if(mongoose.connection.readyState === 1){
-        mongodb = "connected";
-    }
+  if (mongoose.connection.readyState === 1) {
+    mongodb = "connected";
+  }
 
-    const success = postgres === "connected" && mongodb === "connected";
+  const success = postgres === "connected" && mongodb === "connected";
 
-    res.status(success ? 200 : 503).json({
-        success,
-        databases: {
-            postgres,
-            mongodb
-        }
-    });
-})
+  res.status(success ? 200 : 503).json({
+    success,
+    databases: {
+      postgres,
+      mongodb,
+    },
+  });
+});
 
-// Use the auth routes
+// Routes
 app.use("/api/auth", authRoutes);
-
-// Use the product routes
 app.use("/api/products", productRoutes);
-
+app.use("/api/admin", adminRoutes)
 
 export default app;
