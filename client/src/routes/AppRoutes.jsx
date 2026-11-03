@@ -1,0 +1,31 @@
+import { Route, Routes } from "react-router-dom";
+import Login from "../pages/Login";
+import Home from "../pages/Home";
+import Register from "../pages/Register";
+import Products from "../pages/Products";
+import ProductDetails from "../pages/ProductDetails";
+import Profile from "../pages/Profile";
+import NotFound from "../pages/NotFound";
+import AdminDashboard from "../pages/AdminDashboard";
+
+function AppRoutes() {
+    return (
+        <Routes>
+            {/*Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:id" element={<ProductDetails />} />
+
+            {/* Private Routes */}
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+
+            {/* Catch-all route for 404 Not Found */}
+            <Route path="*" element={<NotFound />} />
+        </Routes>
+    )
+}
+
+export default AppRoutes;
