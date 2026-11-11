@@ -228,6 +228,7 @@ export const getMe = async ( req, res ) => {
         id: true,
         name: true,
         email: true,
+        role: true,
         emailVerified: true,
         createdAt: true,
       }

@@ -83,8 +83,10 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try{
             await api.post("/auth/logout");
+            
         }finally{
             setUser(null);
+            console.log("User logged out successfully");
         }
     };
 
@@ -94,8 +96,15 @@ export const AuthProvider = ({ children }) => {
         window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
     };
 
+    // Register a new User
+
+    const register = async (userData) => {
+        const response = await api.post("/auth/register", userData);
+        return response.data;
+    }
+
     const value = {
-        user, loading, isAuthenticated: Boolean(user), login, logout, googleLogin, refreshUser
+        user, loading, isAuthenticated: Boolean(user), login, logout, googleLogin, refreshUser, register
     };
 
     return (

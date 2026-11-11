@@ -1,44 +1,98 @@
 
-import { useAuth } from "../context/AuthContext.jsx";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-function Home() {
-  const {
-    user,
-    loading,
-    isAuthenticated,
-    logout,
-  } = useAuth();
+import api from "../services/api";
+import ProductCard from "../components/products/ProductCard";
 
-  if (loading) {
-    return <div className="p-8">Checking authentication...</div>;
-  }
+const Home = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get("/products", {
+          params: {
+            limit: 4,
+            sortBy: "createdAt",
+            order: "desc",
+          },
+        });
+
+        setProducts(response.data.products);
+      } catch (error) {
+        setError(
+          error.response?.data?.message ||
+          "Unable to fetch products."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 p-10 text-white">
-      <h1 className="text-3xl font-bold">
-        Welcome to MPERN Store
-      </h1>
+    <main>
+      {/* Hero Section */}
+      <section className="px-8 py-20 text-center bg-gray-100">
+        <h1 className="text-4xl font-bold mb-4">
+          Welcome to MPERN Store
+        </h1>
 
-      {isAuthenticated ? (
-        <div className="mt-6 space-y-3">
-          <p>Welcome, {user.name || user.email}</p>
-          <p>Email: {user.email}</p>
-          <p>Role: {user.role}</p>
-
-          <button
-            onClick={logout}
-            className="rounded-lg bg-red-600 px-5 py-2"
-          >
-            Logout
-          </button>
-        </div>
-      ) : (
-        <p className="mt-6 text-slate-400">
-          You are currently logged out.
+        <p className="text-gray-600 text-lg mb-8">
+          Discover quality products at the best prices.
         </p>
-      )}
-    </div>
+
+        <Link
+          to="/products"
+          className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800"
+        >
+          Shop Now
+        </Link>
+      </section>
+
+      {/* Featured Products */}
+      <section className="px-8 py-12">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold">
+            Latest Products
+          </h2>
+
+          <Link
+            to="/products"
+            className="text-blue-600 hover:underline"
+          >
+            View All
+          </Link>
+        </div>
+
+        {loading && <p>Loading products...</p>}
+
+        {error && (
+          <p className="text-red-600">{error}</p>
+        )}
+
+        {!loading && !error && products.length === 0 && (
+          <p>No products available yet.</p>
+        )}
+
+        {!loading && !error && products.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard
+                key={product._id}
+                product={product}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
-}
+};
 
 export default Home;

@@ -7,6 +7,8 @@ import ProductDetails from "../pages/ProductDetails";
 import Profile from "../pages/Profile";
 import NotFound from "../pages/NotFound";
 import AdminDashboard from "../pages/AdminDashboard";
+import EmailVerification from "../pages/EmailVerification";
+import CheckEmail from "../pages/CheckEmail.jsx";
 
 // Import the ProtectedRoutes component
 import ProtectedRoutes from "./ProtectedRoutes.jsx";
@@ -22,6 +24,8 @@ function AppRoutes() {
             <Route element={<PublicOnlyRoute />}>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/verify-email" element={<EmailVerification />}/>
+                <Route path="/check-email" element={<CheckEmail />}/>
             </Route>
             <Route path="/products" element={<Products />} />
             <Route path="/products/:id" element={<ProductDetails />} />
