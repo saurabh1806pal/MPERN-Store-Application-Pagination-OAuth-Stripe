@@ -9,3 +9,14 @@ We'll therefore use a controlled workflow:
 - If order creation fails, restore the inventory that was reserved.
 - Clear the cart only after successful order creation.
 We'll also prevent overselling by checking inventory during the atomic update, not just during the initial product lookup.
+
+
+These are the Customer facing API Endpoints
+POST /api/orders - Create an Order
+GET /api/orders — List the logged-in customer's orders.
+GET /api/orders/:id — Get complete details of one order.
+
+
+These are the ADMINS only API Endpoints
+PATCH /api/admin/orders/:id/status — Allow admins to update order status.
+PATCH /api/admin/orders/:id/payment — Allow admins to update payment status.
