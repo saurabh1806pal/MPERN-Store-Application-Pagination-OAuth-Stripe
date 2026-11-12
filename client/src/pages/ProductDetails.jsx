@@ -3,17 +3,24 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
 import api from "../services/api";
+import { useCart } from "../context/CartContext";
 
 const ProductDetails = () => {
-  // Extract product ID from URL
   const { id } = useParams();
 
-  // Component States
+  const { addToCart } = useCart();
+
+  // Product States
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch Individual Product
+  // Cart States
+  const [quantity, setQuantity] = useState(1);
+  const [adding, setAdding] = useState(false);
+  const [cartMessage, setCartMessage] = useState("");
+
+  // Fetch Product
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -39,55 +46,87 @@ const ProductDetails = () => {
 
   }, [id]);
 
-  // Loading State
+  // Add Product to Cart
+  // const handleAddToCart = async () => {
+  //   try {
+  //     setAdding(true);
+  //     setCartMessage("");
+
+  //     await addToCart(product._id, quantity);
+
+  //     setCartMessage("Product added to cart successfully!");
+
+  //   } catch (error) {
+  //     setCartMessage(
+  //       error.response?.data?.message ||
+  //       "Unable to add product to cart."
+  //     );
+
+  //   } finally {
+  //     setAdding(false);
+  //   }
+  // };
+  const handleAddToCart = async () => {
+  console.log("ADD TO CART CLICKED");
+  console.log("Product ID:", product._id);
+  console.log("Quantity:", quantity);
+
+  try {
+    setAdding(true);
+    setCartMessage("");
+
+    const result = await addToCart(product._id, quantity);
+
+    console.log("CART RESPONSE:", result);
+
+    setCartMessage("Product added successfully!");
+
+  } catch (error) {
+    console.error("ADD TO CART ERROR:", error);
+
+    setCartMessage(
+      error.response?.data?.message ||
+      error.message ||
+      "Unable to add product to cart."
+    );
+
+  } finally {
+    setAdding(false);
+  }
+};
+
   if (loading) {
     return <p className="p-8">Loading product details...</p>;
   }
 
-  // Error State
   if (error) {
     return (
       <div className="p-8">
         <p className="text-red-600">{error}</p>
-        <Link to="/products" className="text-blue-600 underline">
-          Back to Products
-        </Link>
+        <Link to="/products">Back to Products</Link>
       </div>
     );
   }
 
-  // Product Not Found
   if (!product) {
-    return (
-      <div className="p-8">
-        <p>Product not found.</p>
-        <Link to="/products" className="text-blue-600 underline">
-          Back to Products
-        </Link>
-      </div>
-    );
+    return <p className="p-8">Product not found.</p>;
   }
 
   return (
     <main className="px-8 py-10">
 
-      <Link
-        to="/products"
-        className="text-blue-600 hover:underline"
-      >
+      <Link to="/products" className="text-blue-600">
         ← Back to Products
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-8">
 
-        {/* Product Image Placeholder */}
         <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
           <span className="text-gray-400">
             No Image Available
           </span>
         </div>
 
-        {/* Product Information */}
         <div>
 
           <p className="text-gray-500 mb-2">
@@ -107,22 +146,59 @@ const ProductDetails = () => {
           </p>
 
           <p className="mb-6">
-            <span className="font-semibold">Availability: </span>
-
-            {product.quantity > 0
-              ? `${product.quantity} items available`
-              : "Out of Stock"}
+            <strong>Available Quantity:</strong>{" "}
+            {product.quantity}
           </p>
 
+          {/* Quantity Selector */}
+          <div className="flex items-center gap-4 mb-6">
+
+            <label htmlFor="quantity">
+              Quantity:
+            </label>
+
+            <input
+              id="quantity"
+              type="number"
+              min="1"
+              max={product.quantity}
+              value={quantity}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+
+                if (
+                  Number.isInteger(value) &&
+                  value >= 1 &&
+                  value <= product.quantity
+                ) {
+                  setQuantity(value);
+                }
+              }}
+              className="border rounded-md px-3 py-2 w-20"
+            />
+
+          </div>
+
+          {/* Add to Cart */}
           <button
-            disabled={product.quantity <= 0}
+            onClick={handleAddToCart}
+            disabled={
+              adding ||
+              product.quantity <= 0 ||
+              quantity > product.quantity
+            }
             className="bg-black text-white px-8 py-3 rounded-md disabled:opacity-40"
           >
-            Add to Cart
+            {adding ? "Adding..." : "Add to Cart"}
           </button>
 
-        </div>
+          {cartMessage && (
+            <p className="mt-4 text-sm">
+              {cartMessage}
+            </p>
+          )}
 
+        </div>
       </div>
     </main>
   );

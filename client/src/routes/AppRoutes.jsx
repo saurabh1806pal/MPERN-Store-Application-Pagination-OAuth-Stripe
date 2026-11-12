@@ -9,6 +9,8 @@ import NotFound from "../pages/NotFound";
 import AdminDashboard from "../pages/AdminDashboard";
 import EmailVerification from "../pages/EmailVerification";
 import CheckEmail from "../pages/CheckEmail.jsx";
+import Cart from "../pages/Cart.jsx";
+import Checkout from "../pages/Checkout.jsx";
 
 // Import the ProtectedRoutes component
 import ProtectedRoutes from "./ProtectedRoutes.jsx";
@@ -34,6 +36,8 @@ function AppRoutes() {
             <Route element={<ProtectedRoutes />}>
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
             </Route>
 
             {/* Catch-all route for 404 Not Found */}

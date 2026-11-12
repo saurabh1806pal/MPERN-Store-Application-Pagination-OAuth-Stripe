@@ -8,6 +8,7 @@ import {getCartDetails, isValidProductId} from '../utils/cartHelpers.js';
 export const getCart = async (req, res) => {
     try{
         const cart = await getCartDetails(req.user.id);
+        res.set("Cache-Control", "no-store");
 
         return res.status(200).json({
             success: true,
@@ -68,7 +69,7 @@ export const addToCart = async (req, res) => {
     }
 
     // Check stock
-    if (product.stock < 1) {
+    if (product.quantity < 1) {
       return res.status(400).json({
         success: false,
         message: "Product is out of stock",
@@ -96,10 +97,10 @@ export const addToCart = async (req, res) => {
       (existingItem?.quantity || 0) + quantity;
 
     // Ensure requested quantity does not exceed stock
-    if (newQuantity > product.stock) {
+    if (newQuantity > product.quantity) {
       return res.status(400).json({
         success: false,
-        message: `Only ${product.stock} units are available`,
+        message: `Only ${product.quantity} units are available`,
       });
     }
 
@@ -199,10 +200,10 @@ export const updateCartItem = async (req, res) => {
     }
 
     // Validate available stock
-    if (quantity > product.stock) {
+    if (quantity > product.quantity) {
       return res.status(400).json({
         success: false,
-        message: `Only ${product.stock} units are available`,
+        message: `Only ${product.quantity} units are available`,
       });
     }
 
