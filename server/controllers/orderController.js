@@ -288,7 +288,6 @@ export const getMyOrders = async (req, res) => {
 
 // GET /api/orders/:id
 
-
 export const getOrderById = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -334,6 +333,209 @@ export const getOrderById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Unable to retrieve order details.",
+    });
+  }
+};
+
+
+// PATCH /api/orders/:id/status
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const orderId = Number(req.params.id);
+    const { status } = req.body;
+
+    // 1. Validate order ID
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID.",
+      });
+    }
+
+    // 2. Define allowed order status transitions
+    const allowedTransitions = {
+      PENDING: ["CONFIRMED"],
+      CONFIRMED: ["PROCESSING"],
+      PROCESSING: ["SHIPPED"],
+      SHIPPED: ["DELIVERED"],
+      DELIVERED: [],
+      CANCELLED: [],
+    };
+
+    // 3. Validate requested status
+    if (
+      typeof status !== "string" ||
+      !Object.prototype.hasOwnProperty.call(allowedTransitions, status)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order status.",
+      });
+    }
+
+    // 4. Find the existing order
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!existingOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    // 5. Validate the status transition
+    const permittedStatuses = allowedTransitions[existingOrder.status];
+
+    if (!permittedStatuses.includes(status)) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot change order status from ${existingOrder.status} to ${status}.`,
+      });
+    }
+
+    // 6. Update only if the status has not changed concurrently
+    const result = await prisma.order.updateMany({
+      where: {
+        id: orderId,
+        status: existingOrder.status,
+      },
+      data: {
+        status,
+      },
+    });
+
+    if (result.count === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Order status changed. Please refresh and try again.",
+      });
+    }
+
+    // 7. Retrieve updated order
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: true,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated successfully.",
+      order: updatedOrder,
+    });
+
+  } catch (error) {
+    console.error("Update order status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update order status.",
+    });
+  }
+};
+
+
+// PATCH /api/admin/orders/:id/payment
+
+export const updatePaymentStatus = async (req, res) => {
+  try {
+    const orderId = Number(req.params.id);
+    const { paymentStatus } = req.body;
+
+    // 1. Validate order ID
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID.",
+      });
+    }
+
+    // 2. Define allowed payment status transitions
+    const allowedTransitions = {
+      PENDING: ["PAID", "FAILED"],
+      PAID: ["REFUNDED"],
+      FAILED: [],
+      REFUNDED: [],
+    };
+
+    // 3. Validate requested payment status
+    if (
+      typeof paymentStatus !== "string" ||
+      !Object.prototype.hasOwnProperty.call(
+        allowedTransitions,
+        paymentStatus
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment status.",
+      });
+    }
+
+    // 4. Find the existing order
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!existingOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    // 5. Validate payment status transition
+    const permittedStatuses =
+      allowedTransitions[existingOrder.paymentStatus];
+
+    if (!permittedStatuses.includes(paymentStatus)) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot change payment status from ${existingOrder.paymentStatus} to ${paymentStatus}.`,
+      });
+    }
+
+    // 6. Update only if the payment status hasn't changed concurrently
+    const result = await prisma.order.updateMany({
+      where: {
+        id: orderId,
+        paymentStatus: existingOrder.paymentStatus,
+      },
+      data: {
+        paymentStatus,
+      },
+    });
+
+    if (result.count === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Payment status changed. Please refresh and try again.",
+      });
+    }
+
+    // 7. Retrieve updated order
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: true,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment status updated successfully.",
+      order: updatedOrder,
+    });
+
+  } catch (error) {
+    console.error("Update payment status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update payment status.",
     });
   }
 };
