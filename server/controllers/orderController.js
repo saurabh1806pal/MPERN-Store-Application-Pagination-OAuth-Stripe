@@ -539,3 +539,164 @@ export const updatePaymentStatus = async (req, res) => {
     });
   }
 };
+
+
+// PATCH /api/orders/:id/cancel
+
+export const cancelOrder = async (req, res) => {
+  const userId = req.user.id;
+  const orderId = Number(req.params.id);
+
+  try {
+    // 1. Validate order ID
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID",
+      });
+    }
+
+    // 2. Find the customer's order
+    const order = await prisma.order.findFirst({
+      where: {
+        id: orderId,
+        userId,
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // 3. Check payment status
+    if (order.paymentStatus === "PAID") {
+      return res.status(409).json({
+        success: false,
+        message: "Paid orders require a refund before cancellation",
+      });
+    }
+
+    // 4. Check whether cancellation is allowed
+    const cancellableStatuses = ["PENDING", "CONFIRMED"];
+
+    if (!cancellableStatuses.includes(order.status)) {
+      return res.status(409).json({
+        success: false,
+        message: `Order cannot be cancelled in ${order.status} status`,
+      });
+    }
+
+    // 5. Claim cancellation using a conditional update.
+    // This prevents two simultaneous cancellation requests
+    // from restoring inventory twice.
+    const cancellation = await prisma.order.updateMany({
+      where: {
+        id: orderId,
+        userId,
+        status: order.status,
+        paymentStatus: {
+          in: ["PENDING", "FAILED"],
+        },
+      },
+      data: {
+        status: "CANCELLED",
+      },
+    });
+
+    if (cancellation.count === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Order was already updated or cannot be cancelled",
+      });
+    }
+
+    // 6. Restore inventory in MongoDB
+    const restoredProducts = [];
+
+    try {
+      for (const item of order.items) {
+        const product = await Product.findByIdAndUpdate(
+          item.productId,
+          {
+            $inc: {
+              quantity: item.quantity,
+            },
+          },
+          {
+            new: true,
+            runValidators: true,
+          }
+        );
+
+        if (!product) {
+          throw new Error(
+            `Product ${item.productId} not found during inventory restoration`
+          );
+        }
+
+        restoredProducts.push(item);
+      }
+    } catch (inventoryError) {
+      // 7. Compensate for any inventory already restored
+      for (const item of restoredProducts.reverse()) {
+        try {
+          await Product.findByIdAndUpdate(item.productId, {
+            $inc: {
+              quantity: -item.quantity,
+            },
+          });
+        } catch (rollbackError) {
+          console.error(
+            "Inventory rollback failed:",
+            item.productId,
+            rollbackError
+          );
+        }
+      }
+
+      // 8. Revert the order status if inventory restoration fails
+      await prisma.order.updateMany({
+        where: {
+          id: orderId,
+          userId,
+          status: "CANCELLED",
+        },
+        data: {
+          status: order.status,
+        },
+      });
+
+      throw inventoryError;
+    }
+
+    // 9. Return the updated order
+    const updatedOrder = await prisma.order.findUnique({
+      where: {
+        id: orderId,
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Order cancelled and inventory restored successfully",
+      order: updatedOrder,
+    });
+
+  } catch (error) {
+    console.error("Cancel order error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to cancel order",
+    });
+  }
+};
