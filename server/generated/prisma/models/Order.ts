@@ -47,6 +47,8 @@ export type OrderSumAggregateOutputType = {
 export type OrderMinAggregateOutputType = {
   id: number | null
   userId: number | null
+  razorpayOrderId: string | null
+  razorpayPaymentId: string | null
   fullName: string | null
   phone: string | null
   addressLine1: string | null
@@ -69,6 +71,8 @@ export type OrderMinAggregateOutputType = {
 export type OrderMaxAggregateOutputType = {
   id: number | null
   userId: number | null
+  razorpayOrderId: string | null
+  razorpayPaymentId: string | null
   fullName: string | null
   phone: string | null
   addressLine1: string | null
@@ -91,6 +95,8 @@ export type OrderMaxAggregateOutputType = {
 export type OrderCountAggregateOutputType = {
   id: number
   userId: number
+  razorpayOrderId: number
+  razorpayPaymentId: number
   fullName: number
   phone: number
   addressLine1: number
@@ -133,6 +139,8 @@ export type OrderSumAggregateInputType = {
 export type OrderMinAggregateInputType = {
   id?: true
   userId?: true
+  razorpayOrderId?: true
+  razorpayPaymentId?: true
   fullName?: true
   phone?: true
   addressLine1?: true
@@ -155,6 +163,8 @@ export type OrderMinAggregateInputType = {
 export type OrderMaxAggregateInputType = {
   id?: true
   userId?: true
+  razorpayOrderId?: true
+  razorpayPaymentId?: true
   fullName?: true
   phone?: true
   addressLine1?: true
@@ -177,6 +187,8 @@ export type OrderMaxAggregateInputType = {
 export type OrderCountAggregateInputType = {
   id?: true
   userId?: true
+  razorpayOrderId?: true
+  razorpayPaymentId?: true
   fullName?: true
   phone?: true
   addressLine1?: true
@@ -286,6 +298,8 @@ export type OrderGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type OrderGroupByOutputType = {
   id: number
   userId: number
+  razorpayOrderId: string | null
+  razorpayPaymentId: string | null
   fullName: string
   phone: string
   addressLine1: string
@@ -331,6 +345,8 @@ export type OrderWhereInput = {
   NOT?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
   id?: Prisma.IntFilter<"Order"> | number
   userId?: Prisma.IntFilter<"Order"> | number
+  razorpayOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
+  razorpayPaymentId?: Prisma.StringNullableFilter<"Order"> | string | null
   fullName?: Prisma.StringFilter<"Order"> | string
   phone?: Prisma.StringFilter<"Order"> | string
   addressLine1?: Prisma.StringFilter<"Order"> | string
@@ -355,6 +371,8 @@ export type OrderWhereInput = {
 export type OrderOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  razorpayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  razorpayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
@@ -378,6 +396,8 @@ export type OrderOrderByWithRelationInput = {
 
 export type OrderWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  razorpayOrderId?: string
+  razorpayPaymentId?: string
   AND?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
   OR?: Prisma.OrderWhereInput[]
   NOT?: Prisma.OrderWhereInput | Prisma.OrderWhereInput[]
@@ -401,11 +421,13 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   items?: Prisma.OrderItemListRelationFilter
-}, "id">
+}, "id" | "razorpayOrderId" | "razorpayPaymentId">
 
 export type OrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  razorpayOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  razorpayPaymentId?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
@@ -436,6 +458,8 @@ export type OrderScalarWhereWithAggregatesInput = {
   NOT?: Prisma.OrderScalarWhereWithAggregatesInput | Prisma.OrderScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Order"> | number
   userId?: Prisma.IntWithAggregatesFilter<"Order"> | number
+  razorpayOrderId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  razorpayPaymentId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   fullName?: Prisma.StringWithAggregatesFilter<"Order"> | string
   phone?: Prisma.StringWithAggregatesFilter<"Order"> | string
   addressLine1?: Prisma.StringWithAggregatesFilter<"Order"> | string
@@ -456,6 +480,8 @@ export type OrderScalarWhereWithAggregatesInput = {
 }
 
 export type OrderCreateInput = {
+  razorpayOrderId?: string | null
+  razorpayPaymentId?: string | null
   fullName: string
   phone: string
   addressLine1: string
@@ -480,6 +506,8 @@ export type OrderCreateInput = {
 export type OrderUncheckedCreateInput = {
   id?: number
   userId: number
+  razorpayOrderId?: string | null
+  razorpayPaymentId?: string | null
   fullName: string
   phone: string
   addressLine1: string
@@ -501,6 +529,8 @@ export type OrderUncheckedCreateInput = {
 }
 
 export type OrderUpdateInput = {
+  razorpayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
@@ -525,6 +555,8 @@ export type OrderUpdateInput = {
 export type OrderUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  razorpayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
@@ -548,6 +580,8 @@ export type OrderUncheckedUpdateInput = {
 export type OrderCreateManyInput = {
   id?: number
   userId: number
+  razorpayOrderId?: string | null
+  razorpayPaymentId?: string | null
   fullName: string
   phone: string
   addressLine1: string
@@ -568,6 +602,8 @@ export type OrderCreateManyInput = {
 }
 
 export type OrderUpdateManyMutationInput = {
+  razorpayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
@@ -590,6 +626,8 @@ export type OrderUpdateManyMutationInput = {
 export type OrderUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  razorpayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
@@ -622,6 +660,8 @@ export type OrderOrderByRelationAggregateInput = {
 export type OrderCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  razorpayOrderId?: Prisma.SortOrder
+  razorpayPaymentId?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
@@ -653,6 +693,8 @@ export type OrderAvgOrderByAggregateInput = {
 export type OrderMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  razorpayOrderId?: Prisma.SortOrder
+  razorpayPaymentId?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
@@ -675,6 +717,8 @@ export type OrderMaxOrderByAggregateInput = {
 export type OrderMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  razorpayOrderId?: Prisma.SortOrder
+  razorpayPaymentId?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
@@ -781,6 +825,8 @@ export type OrderUpdateOneRequiredWithoutItemsNestedInput = {
 }
 
 export type OrderCreateWithoutUserInput = {
+  razorpayOrderId?: string | null
+  razorpayPaymentId?: string | null
   fullName: string
   phone: string
   addressLine1: string
@@ -803,6 +849,8 @@ export type OrderCreateWithoutUserInput = {
 
 export type OrderUncheckedCreateWithoutUserInput = {
   id?: number
+  razorpayOrderId?: string | null
+  razorpayPaymentId?: string | null
   fullName: string
   phone: string
   addressLine1: string
@@ -855,6 +903,8 @@ export type OrderScalarWhereInput = {
   NOT?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
   id?: Prisma.IntFilter<"Order"> | number
   userId?: Prisma.IntFilter<"Order"> | number
+  razorpayOrderId?: Prisma.StringNullableFilter<"Order"> | string | null
+  razorpayPaymentId?: Prisma.StringNullableFilter<"Order"> | string | null
   fullName?: Prisma.StringFilter<"Order"> | string
   phone?: Prisma.StringFilter<"Order"> | string
   addressLine1?: Prisma.StringFilter<"Order"> | string
@@ -875,6 +925,8 @@ export type OrderScalarWhereInput = {
 }
 
 export type OrderCreateWithoutItemsInput = {
+  razorpayOrderId?: string | null
+  razorpayPaymentId?: string | null
   fullName: string
   phone: string
   addressLine1: string
@@ -898,6 +950,8 @@ export type OrderCreateWithoutItemsInput = {
 export type OrderUncheckedCreateWithoutItemsInput = {
   id?: number
   userId: number
+  razorpayOrderId?: string | null
+  razorpayPaymentId?: string | null
   fullName: string
   phone: string
   addressLine1: string
@@ -934,6 +988,8 @@ export type OrderUpdateToOneWithWhereWithoutItemsInput = {
 }
 
 export type OrderUpdateWithoutItemsInput = {
+  razorpayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
@@ -957,6 +1013,8 @@ export type OrderUpdateWithoutItemsInput = {
 export type OrderUncheckedUpdateWithoutItemsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  razorpayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
@@ -978,6 +1036,8 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
 
 export type OrderCreateManyUserInput = {
   id?: number
+  razorpayOrderId?: string | null
+  razorpayPaymentId?: string | null
   fullName: string
   phone: string
   addressLine1: string
@@ -998,6 +1058,8 @@ export type OrderCreateManyUserInput = {
 }
 
 export type OrderUpdateWithoutUserInput = {
+  razorpayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1020,6 +1082,8 @@ export type OrderUpdateWithoutUserInput = {
 
 export type OrderUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  razorpayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1042,6 +1106,8 @@ export type OrderUncheckedUpdateWithoutUserInput = {
 
 export type OrderUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  razorpayOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razorpayPaymentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1095,6 +1161,8 @@ export type OrderCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Types.Ext
 export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  razorpayOrderId?: boolean
+  razorpayPaymentId?: boolean
   fullName?: boolean
   phone?: boolean
   addressLine1?: boolean
@@ -1120,6 +1188,8 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  razorpayOrderId?: boolean
+  razorpayPaymentId?: boolean
   fullName?: boolean
   phone?: boolean
   addressLine1?: boolean
@@ -1143,6 +1213,8 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  razorpayOrderId?: boolean
+  razorpayPaymentId?: boolean
   fullName?: boolean
   phone?: boolean
   addressLine1?: boolean
@@ -1166,6 +1238,8 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type OrderSelectScalar = {
   id?: boolean
   userId?: boolean
+  razorpayOrderId?: boolean
+  razorpayPaymentId?: boolean
   fullName?: boolean
   phone?: boolean
   addressLine1?: boolean
@@ -1185,7 +1259,7 @@ export type OrderSelectScalar = {
   updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "fullName" | "phone" | "addressLine1" | "addressLine2" | "city" | "state" | "postalCode" | "country" | "subtotal" | "shippingFee" | "taxAmount" | "totalAmount" | "currency" | "status" | "paymentStatus" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "razorpayOrderId" | "razorpayPaymentId" | "fullName" | "phone" | "addressLine1" | "addressLine2" | "city" | "state" | "postalCode" | "country" | "subtotal" | "shippingFee" | "taxAmount" | "totalAmount" | "currency" | "status" | "paymentStatus" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   items?: boolean | Prisma.Order$itemsArgs<ExtArgs>
@@ -1207,6 +1281,8 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     userId: number
+    razorpayOrderId: string | null
+    razorpayPaymentId: string | null
     fullName: string
     phone: string
     addressLine1: string
@@ -1651,6 +1727,8 @@ export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Ty
 export interface OrderFieldRefs {
   readonly id: Prisma.FieldRef<"Order", 'Int'>
   readonly userId: Prisma.FieldRef<"Order", 'Int'>
+  readonly razorpayOrderId: Prisma.FieldRef<"Order", 'String'>
+  readonly razorpayPaymentId: Prisma.FieldRef<"Order", 'String'>
   readonly fullName: Prisma.FieldRef<"Order", 'String'>
   readonly phone: Prisma.FieldRef<"Order", 'String'>
   readonly addressLine1: Prisma.FieldRef<"Order", 'String'>

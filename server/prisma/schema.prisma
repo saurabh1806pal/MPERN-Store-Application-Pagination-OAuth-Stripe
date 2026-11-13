@@ -90,6 +90,9 @@ model Order {
   id     Int @id @default(autoincrement())
   userId Int
 
+  razorpayOrderId   String? @unique
+  razorpayPaymentId String? @unique
+
   // Shipping information
   fullName     String
   phone        String

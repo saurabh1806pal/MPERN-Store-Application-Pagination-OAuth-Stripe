@@ -15,6 +15,7 @@ function NavLinks({ user, className = "" }) {
     { to: "/", label: "Home", end: true },
     { to: "/products", label: "Products" },
     ...(user ? [{ to: "/cart", label: "Cart" }] : []),
+    ...(user ? [{ to: "/orders", label: "My Orders" }] : []),
   ];
 
   return (
