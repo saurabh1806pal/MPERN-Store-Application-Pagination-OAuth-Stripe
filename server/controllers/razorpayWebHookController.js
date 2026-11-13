@@ -1,4 +1,3 @@
-
 import crypto from "crypto";
 import { prisma } from "../config/prisma.js";
 
@@ -15,10 +14,7 @@ export const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
-    if (
-      typeof signature !== "string" ||
-      !/^[a-f0-9]{64}$/i.test(signature)
-    ) {
+    if (typeof signature !== "string" || !/^[a-f0-9]{64}$/i.test(signature)) {
       return res.status(400).json({
         success: false,
         message: "Invalid webhook signature.",
@@ -47,6 +43,13 @@ export const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
+    // TEMPORARY DEBUG LOGS
+    console.log("Webhook Event ID:", req.headers["x-razorpay-event-id"]);
+
+    console.log("Webhook Signature:", req.headers["x-razorpay-signature"]);
+
+    console.log("Raw Webhook Body:", req.body.toString("utf8"));
+
     // 2. Parse body only after signature verification.
     const event = JSON.parse(req.body.toString("utf8"));
 
@@ -59,10 +62,7 @@ export const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
-    const supportedEvents = [
-      "payment.captured",
-      "payment.failed",
-    ];
+    const supportedEvents = ["payment.captured", "payment.failed"];
 
     if (!supportedEvents.includes(event.event)) {
       return res.status(200).json({
@@ -85,9 +85,7 @@ export const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
-    const expectedAmount = Math.round(
-      Number(order.totalAmount) * 100
-    );
+    const expectedAmount = Math.round(Number(order.totalAmount) * 100);
 
     if (
       payment.amount !== expectedAmount ||
@@ -99,10 +97,7 @@ export const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
-    if (
-      event.event === "payment.captured" &&
-      payment.status !== "captured"
-    ) {
+    if (event.event === "payment.captured" && payment.status !== "captured") {
       return res.status(400).json({
         success: false,
         message: "Payment is not captured.",
@@ -150,9 +145,7 @@ export const handleRazorpayWebhook = async (req, res) => {
             currentOrder?.razorpayPaymentId === payment.id;
 
           if (!alreadyProcessed) {
-            throw new Error(
-              "Order could not be updated for captured payment."
-            );
+            throw new Error("Order could not be updated for captured payment.");
           }
         }
       }
@@ -175,7 +168,6 @@ export const handleRazorpayWebhook = async (req, res) => {
       success: true,
       message: "Webhook processed successfully.",
     });
-
   } catch (error) {
     // P2002 means a unique constraint was violated.
     // For our eventId constraint, this means a duplicate delivery.
