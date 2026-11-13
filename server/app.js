@@ -14,6 +14,7 @@ import adminRoutes from "./routes/adminRoutes.js"
 import cartRoutes from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import {handleRazorpayWebhook} from "./controllers/razorpayWebHookController.js";
 
 const app = express();
 
@@ -24,6 +25,17 @@ app.use(
     credentials: true,
   })
 );
+
+// Razorpay webhook must receive the raw request body.
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  handleRazorpayWebhook
+);
+
+// Normal middleware comes afterwards.
+app.use(express.json());
+app.use(cookieParser());
 
 // Parse request bodies and cookies
 app.use(express.json());

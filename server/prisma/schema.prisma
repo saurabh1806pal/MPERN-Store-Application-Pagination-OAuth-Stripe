@@ -148,3 +148,14 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
 }
+
+
+model WebhookEvent {
+  id          Int      @id @default(autoincrement())
+  eventId     String   @unique
+  eventType   String
+  processedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([eventType])
+}
