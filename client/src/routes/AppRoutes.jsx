@@ -13,6 +13,9 @@ import Cart from "../pages/Cart.jsx";
 import Checkout from "../pages/Checkout.jsx";
 import MyOrders from "../pages/MyOrders";
 import OrderDetails from "../pages/OrderDetails";
+import AdminProducts from "../pages/admin/AdminProducts";
+import AdminCreateProduct from "../pages/admin/AdminCreateProduct";
+import AdminEditProduct from "../pages/admin/AdminEditProduct";
 
 // Import the ProtectedRoutes component
 import ProtectedRoutes from "./ProtectedRoutes.jsx";
@@ -21,33 +24,40 @@ import ProtectedRoutes from "./ProtectedRoutes.jsx";
 import PublicOnlyRoute from "./PublicOnlyRoute.jsx";
 
 function AppRoutes() {
-    return (
-        <Routes>
-            {/*Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route element={<PublicOnlyRoute />}>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/verify-email" element={<EmailVerification />}/>
-                <Route path="/check-email" element={<CheckEmail />}/>
-            </Route>
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/:id" element={<ProductDetails />} />
+  return (
+    <Routes>
+      {/*Public Routes */}
+      <Route path="/" element={<Home />} />
+      <Route element={<PublicOnlyRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<EmailVerification />} />
+        <Route path="/check-email" element={<CheckEmail />} />
+      </Route>
+      <Route path="/products" element={<Products />} />
+      <Route path="/products/:id" element={<ProductDetails />} />
 
-            {/* Private Routes */}
-            <Route element={<ProtectedRoutes />}>
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/orders" element={<MyOrders />} />
-                <Route path="/orders/:id" element={<OrderDetails />} />
-            </Route>
+      {/* Private Routes */}
+      <Route element={<ProtectedRoutes />}>
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/orders" element={<MyOrders />} />
+        <Route path="/orders/:id" element={<OrderDetails />} />
+      </Route>
 
-            {/* Catch-all route for 404 Not Found */}
-            <Route path="*" element={<NotFound />} />
-        </Routes>
-    )
+      <Route element={<ProtectedRoutes allowedRoles={["ADMIN"]} />}>
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/products" element={<AdminProducts />} />
+        <Route path="/admin/products/create" element={<AdminCreateProduct />} />
+        {/* Edit Product */}
+        <Route path="/admin/products/:id/edit" element={<AdminEditProduct />} />
+      </Route>
+
+      {/* Catch-all route for 404 Not Found */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
 }
 
 export default AppRoutes;

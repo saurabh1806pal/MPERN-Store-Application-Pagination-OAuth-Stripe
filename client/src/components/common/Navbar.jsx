@@ -1,35 +1,50 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { useNavigate, NavLink, Link } from "react-router-dom";
+import { useNavigate, useLocation, NavLink, Link } from "react-router-dom";
+import { ShoppingBag, LogOut, ChevronDown } from "lucide-react";
 
 const navLinkClass = ({ isActive }) =>
-  `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+  `relative py-2 text-[13px] tracking-wide transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-px after:transition-colors ${
     isActive
-      ? "bg-orange-100 text-orange-800"
-      : "text-amber-100 hover:bg-orange-700/60 hover:text-white"
+      ? "font-medium text-stone-900 after:bg-stone-900"
+      : "text-stone-500 after:bg-transparent hover:text-stone-900"
   }`;
 
-/* Cart is only shown to logged-in users */
-function NavLinks({ user, className = "" }) {
-  const links = [
-    { to: "/", label: "Home", end: true },
-    { to: "/products", label: "Products" },
-    ...(user ? [{ to: "/cart", label: "Cart" }] : []),
-    ...(user ? [{ to: "/orders", label: "My Orders" }] : []),
+function ModeToggle({ adminMode, onChange }) {
+  const options = [
+    { label: "User", value: false },
+    { label: "Admin", value: true },
   ];
 
   return (
-    <div className={className}>
-      {links.map(({ to, label, end }) => (
-        <NavLink key={to} to={to} end={end} className={navLinkClass}>
-          {label}
-        </NavLink>
-      ))}
+    <div
+      role="group"
+      aria-label="View mode"
+      className="flex rounded-full bg-stone-200/70 p-0.5"
+    >
+      {options.map(({ label, value }) => {
+        const active = adminMode === value;
+        return (
+          <button
+            key={label}
+            type="button"
+            aria-pressed={active}
+            onClick={() => !active && onChange(value)}
+            className={`rounded-full px-3 py-1 text-[11px] font-medium uppercase tracking-widest transition-all ${
+              active
+                ? "bg-white text-stone-900 shadow-sm"
+                : "text-stone-500 hover:text-stone-800"
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-function UserMenu({ user }) {
+function UserMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -38,6 +53,7 @@ function UserMenu({ user }) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     };
     const onKey = (e) => e.key === "Escape" && setOpen(false);
+
     document.addEventListener("mousedown", onClick);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -54,69 +70,71 @@ function UserMenu({ user }) {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2 rounded-full bg-orange-700/40 py-1 pl-1 pr-3 text-amber-100 ring-1 ring-orange-500/50 transition hover:bg-orange-700/70 focus:outline-none focus:ring-2 focus:ring-amber-400"
+        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-stone-200/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-stone-400"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-700 text-sm font-bold text-white">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-800 text-xs font-medium text-stone-50">
           {initial}
         </span>
-        <span className="hidden max-w-[8rem] truncate text-sm font-medium sm:block">
-          {user.name || "Account"}
-        </span>
-        <svg
-          className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fillRule="evenodd"
-            d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-            clipRule="evenodd"
-          />
-        </svg>
+        <ChevronDown
+          size={14}
+          className={`text-stone-500 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-72 overflow-hidden rounded-xl border border-orange-200 bg-amber-50 shadow-xl"
+          className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-lg shadow-stone-200/60"
         >
-          <div className="bg-gradient-to-r from-orange-600 to-red-700 px-4 py-3">
-            <p className="truncate text-sm font-semibold text-white">
+          <div className="px-4 py-3">
+            <p className="truncate text-sm font-medium text-stone-900">
               {user.name || "Not provided"}
             </p>
-            <p className="truncate text-xs text-amber-100">{user.email}</p>
+            <p className="truncate text-xs text-stone-500">{user.email}</p>
           </div>
 
-          <ul className="divide-y divide-orange-100 text-sm text-stone-700">
-            <li className="flex items-center justify-between px-4 py-2">
-              <span className="text-stone-500">Role</span>
-              <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-semibold capitalize text-amber-900">
-                {user.role}
-              </span>
-            </li>
-            <li className="flex items-center justify-between px-4 py-2">
-              <span className="text-stone-500">Verified</span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                  user.emailVerified
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
+          <dl className="space-y-2 border-t border-stone-100 bg-[#faf8f4] px-4 py-3 text-xs">
+            <div className="flex items-center justify-between">
+              <dt className="text-stone-500">Role</dt>
+              <dd className="font-medium capitalize text-stone-800">
+                {user.role?.toLowerCase()}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="text-stone-500">Verified</dt>
+              <dd className="flex items-center gap-1.5 font-medium text-stone-800">
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    user.emailVerified ? "bg-stone-800" : "bg-stone-400"
+                  }`}
+                />
                 {user.emailVerified ? "Yes" : "No"}
-              </span>
-            </li>
-          </ul>
+              </dd>
+            </div>
+          </dl>
 
-          <div className="border-t border-orange-200 p-2">
+          <div className="border-t border-stone-100 p-1.5">
             <Link
               to="/profile"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="block rounded-md px-3 py-2 text-sm font-medium text-orange-800 hover:bg-orange-100"
+              className="block rounded-md px-3 py-2 text-[13px] text-stone-700 transition-colors hover:bg-stone-100"
             >
-              View Profile
+              View profile
             </Link>
+            <button
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onLogout();
+              }}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-[13px] text-stone-700 transition-colors hover:bg-stone-100"
+            >
+              <LogOut size={14} />
+              Logout
+            </button>
           </div>
         </div>
       )}
@@ -126,26 +144,47 @@ function UserMenu({ user }) {
 
 function AuthButtons() {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-4">
       <Link
         to="/login"
-        className="rounded-md px-3 py-2 text-sm font-medium text-amber-100 ring-1 ring-orange-500/60 transition hover:bg-orange-700/60 hover:text-white"
+        className="text-[13px] text-stone-600 transition-colors hover:text-stone-900"
       >
         Login
       </Link>
       <Link
         to="/register"
-        className="rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-orange-500"
+        className="rounded-full bg-stone-900 px-4 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-stone-700"
       >
-        Sign Up
+        Sign up
       </Link>
     </div>
+  );
+}
+
+function CartButton() {
+  return (
+    <Link
+      to="/cart"
+      aria-label="Shopping cart"
+      className="rounded-full p-2 text-stone-600 transition-colors hover:bg-stone-200/60 hover:text-stone-900"
+    >
+      <ShoppingBag size={18} strokeWidth={1.75} />
+    </Link>
   );
 }
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  const isAdmin = user?.role === "ADMIN";
+  // Mode comes from the URL, so it survives refresh and back/forward
+  const adminMode = isAdmin && pathname.startsWith("/admin");
+
+  const handleModeChange = (toAdmin) => {
+    navigate(toAdmin ? "/admin/products" : "/");
+  };
 
   const handleLogout = async () => {
     try {
@@ -157,40 +196,63 @@ function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b-2 border-orange-600 bg-gradient-to-r from-stone-900 via-amber-950 to-stone-900 shadow-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-        {/* Brand + desktop links */}
-        <div className="flex items-center gap-6">
+    <nav className="sticky top-0 z-50 border-b border-stone-200 bg-[#faf8f4]/90 font-sans backdrop-blur">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 items-center gap-y-2 px-4 py-3 sm:px-6 md:grid-cols-[1fr_auto_1fr]">
+        {/* Left: brand + mode toggle */}
+        <div className="flex items-center gap-4">
           <Link
             to="/"
-            className="text-xl font-bold tracking-wide text-orange-400 hover:text-orange-300"
+            className="text-[15px] font-semibold tracking-tight text-stone-900"
           >
-            🍂 My Store
+            My Store
           </Link>
-          <NavLinks user={user} className="hidden items-center gap-1 sm:flex" />
+          {isAdmin && (
+            <ModeToggle adminMode={adminMode} onChange={handleModeChange} />
+          )}
         </div>
 
-        {/* Right side: depends on auth state */}
-        {user ? (
-          <div className="flex items-center gap-3">
-            <UserMenu user={user} />
-            <button
-              onClick={handleLogout}
-              className="rounded-md bg-red-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
-            >
-              Logout
-            </button>
-          </div>
-        ) : (
-          <AuthButtons />
-        )}
-      </div>
+        {/* Center: links (own row on mobile, truly centered on desktop) */}
+        <div className="col-span-2 row-start-2 flex items-center justify-center gap-8 md:col-span-1 md:col-start-2 md:row-start-1">
+          {!adminMode ? (
+            <>
+              <NavLink to="/" end className={navLinkClass}>
+                Home
+              </NavLink>
+              <NavLink to="/products" className={navLinkClass}>
+                Products
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink to="/admin/products" end className={navLinkClass}>
+                View Inventory
+              </NavLink>
+              <NavLink to="/admin/products/create" className={navLinkClass}>
+                Create Order
+              </NavLink>
+            </>
+          )}
+        </div>
 
-      {/* Mobile links */}
-      <NavLinks
-        user={user}
-        className="flex items-center justify-center gap-1 border-t border-orange-900/50 pb-2 pt-1 sm:hidden"
-      />
+        {/* Right: orders, cart, profile */}
+        <div className="flex items-center justify-end gap-3 md:col-start-3">
+          {user ? (
+            <>
+              {!adminMode && (
+                <>
+                  <NavLink to="/orders" className={navLinkClass}>
+                    My Orders
+                  </NavLink>
+                  <CartButton />
+                </>
+              )}
+              <UserMenu user={user} onLogout={handleLogout} />
+            </>
+          ) : (
+            <AuthButtons />
+          )}
+        </div>
+      </div>
     </nav>
   );
 }

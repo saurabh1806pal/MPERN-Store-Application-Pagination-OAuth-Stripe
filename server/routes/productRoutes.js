@@ -9,7 +9,8 @@ import {
     deleteProductImageController,
     replaceProductImageController,
     reorderProductImagesController,
-    updateProductContentController
+    updateProductContentController,
+    deleteProductController
 } from "../controllers/productController.js";
 
 import { authenticateUser } from "../middleware/authMiddleware.js";
@@ -43,6 +44,7 @@ router.post(
     uploadProductImages,
     validateProductImages,
     uploadProductImagesController
+    
 );
 
 // Delete a Product Image
@@ -77,5 +79,12 @@ router.patch(
     authenticateUser,
     authorizeRole("ADMIN"),
     updateProductContentController
+);
+
+router.delete(
+    "/:id",
+    authenticateUser,
+    authorizeRole("ADMIN"),
+    deleteProductController
 );
 export default router;

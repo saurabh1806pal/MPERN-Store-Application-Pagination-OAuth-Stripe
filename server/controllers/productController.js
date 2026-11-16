@@ -34,6 +34,91 @@ export const createProduct = async (req, res) => {
   }
 };
 
+
+// DELETE /api/products/:id
+
+export const deleteProductController = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // 1. Find the product
+        const product = await Product.findById(id);
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found.",
+            });
+        }
+
+        // 2. Collect all Cloudinary public IDs
+        const publicIds = product.images
+            .map((image) => image.publicId)
+            .filter(Boolean);
+
+        // 3. Delete all product images from Cloudinary
+        const deletionResults = await Promise.allSettled(
+            publicIds.map((publicId) =>
+                deleteFromCloudinary(publicId)
+            )
+        );
+
+        // 4. Check whether any image deletion failed
+        const failedDeletions = deletionResults.filter((result) => {
+            return (
+                result.status === "rejected" ||
+                (
+                    result.value.result !== "ok" &&
+                    result.value.result !== "not found"
+                )
+            );
+        });
+
+        // Keep the product in MongoDB if cleanup failed.
+        // Successfully deleted images can safely be retried:
+        // Cloudinary will return "not found".
+        if (failedDeletions.length > 0) {
+            console.error(
+                "Some Cloudinary images could not be deleted:",
+                failedDeletions
+            );
+
+            return res.status(502).json({
+                success: false,
+                message:
+                    "Some product images could not be deleted. Product was not removed. Please retry.",
+                failedImages: failedDeletions.length,
+            });
+        }
+
+        // 5. Delete the product from MongoDB
+        await product.deleteOne();
+
+        // 6. Send success response
+        return res.status(200).json({
+            success: true,
+            message: "Product and its images deleted successfully.",
+        });
+
+    } catch (error) {
+        console.error("Product deletion error:", error);
+
+        if (error.name === "CastError") {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid product ID.",
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to delete product.",
+        });
+    }
+};
+
+
+
 // GET /api/products
 
 export const getProducts = async (req, res) => {
