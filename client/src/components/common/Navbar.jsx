@@ -230,6 +230,9 @@ function Navbar() {
               <NavLink to="/admin/products/create" className={navLinkClass}>
                 Create Order
               </NavLink>
+              <NavLink to="/admin/orders" className={navLinkClass}>
+                View Orders
+              </NavLink>
             </>
           )}
         </div>

@@ -1,21 +1,32 @@
-import express from 'express';
 
-import { getAllUsers } from '../controllers/adminController.js';
-import { authenticateUser } from '../middleware/authMiddleware.js';
-import { authorizeRole } from '../middleware/authorizeRole.js';
-import {updateOrderStatus, updatePaymentStatus} from '../controllers/orderController.js'
+import express from "express";
+
+import { getAllUsers } from "../controllers/adminController.js";
+
+import {
+    getAllOrders,
+    updateOrderStatus,
+    updatePaymentStatus,
+    getAdminOrderById
+} from "../controllers/orderController.js";
+
+import { authenticateUser } from "../middleware/authMiddleware.js";
+import { authorizeRole } from "../middleware/authorizeRole.js";
 
 const router = express.Router();
 
-// Only ADMIN can view all the users
+// All admin APIs require authentication and ADMIN role
+router.use(authenticateUser, authorizeRole("ADMIN"));
 
-router.get("/users", authenticateUser, authorizeRole("ADMIN"), getAllUsers);
-router.patch("/orders/:id/status",authenticateUser, authorizeRole("ADMIN"), updateOrderStatus);
-router.patch(
-  "/orders/:id/payment",
-  authenticateUser,
-  authorizeRole("ADMIN"),
-  updatePaymentStatus
-);
+// USER MANAGEMENT
+router.get("/users", getAllUsers);
+
+// ORDER MANAGEMENT
+router.get("/orders", getAllOrders);
+router.get("/orders/:id", getAdminOrderById);
+
+router.patch("/orders/:id/status", updateOrderStatus);
+
+router.patch("/orders/:id/payment", updatePaymentStatus);
 
 export default router;

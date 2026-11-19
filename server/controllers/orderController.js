@@ -700,3 +700,259 @@ export const cancelOrder = async (req, res) => {
     });
   }
 };
+
+
+// GET /api/admin/orders
+export const getAllOrders = async (req, res) => {
+  try {
+    // 1. Read pagination parameters
+    const page = Math.max(
+      1,
+      parseInt(req.query.page, 10) || 1
+    );
+
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(req.query.limit, 10) || 10)
+    );
+
+    const skip = (page - 1) * limit;
+
+    // 2. Read search, filter and sorting parameters
+    const {
+      search = "",
+      status,
+      paymentStatus,
+      sortBy = "createdAt",
+      order = "desc",
+    } = req.query;
+
+    // 3. Validate order status
+    const allowedStatuses = [
+      "PENDING",
+      "CONFIRMED",
+      "PROCESSING",
+      "SHIPPED",
+      "DELIVERED",
+      "CANCELLED",
+    ];
+
+    if (status && !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order status.",
+      });
+    }
+
+    // 4. Validate payment status
+    const allowedPaymentStatuses = [
+      "PENDING",
+      "PAID",
+      "FAILED",
+      "REFUNDED",
+    ];
+
+    if (
+      paymentStatus &&
+      !allowedPaymentStatuses.includes(paymentStatus)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment status.",
+      });
+    }
+
+    // 5. Validate sorting parameters
+    const allowedSortFields = [
+      "id",
+      "createdAt",
+      "updatedAt",
+      "totalAmount",
+      "status",
+      "paymentStatus",
+    ];
+
+    const sortField = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
+
+    const sortOrder = order === "asc" ? "asc" : "desc";
+
+    // 6. Build database filters
+    const filters = {};
+
+    if (status) {
+      filters.status = status;
+    }
+
+    if (paymentStatus) {
+      filters.paymentStatus = paymentStatus;
+    }
+
+    // 7. Search by order ID, customer name, email or phone
+    if (search.trim()) {
+      const searchTerm = search.trim();
+      const searchConditions = [
+        {
+          fullName: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          phone: {
+            contains: searchTerm,
+          },
+        },
+        {
+          user: {
+            is: {
+              OR: [
+                {
+                  name: {
+                    contains: searchTerm,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: searchTerm,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ];
+
+      const numericOrderId = Number(searchTerm);
+
+      if (
+        Number.isSafeInteger(numericOrderId) &&
+        numericOrderId > 0
+      ) {
+        searchConditions.push({
+          id: numericOrderId,
+        });
+      }
+
+      filters.OR = searchConditions;
+    }
+
+    // 8. Fetch orders and total count simultaneously
+    const [orders, totalOrders] = await Promise.all([
+      prisma.order.findMany({
+        where: filters,
+
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+
+          items: true,
+        },
+
+        orderBy: {
+          [sortField]: sortOrder,
+        },
+
+        skip,
+        take: limit,
+      }),
+
+      prisma.order.count({
+        where: filters,
+      }),
+    ]);
+
+    // 9. Calculate pagination information
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    // 10. Return response
+    return res.status(200).json({
+      success: true,
+      message: "All orders fetched successfully.",
+
+      pagination: {
+        currentPage: page,
+        limit,
+        totalOrders,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+
+      orders,
+    });
+
+  } catch (error) {
+    console.error("Get all orders error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to retrieve orders.",
+    });
+  }
+};
+
+// GET /api/admin/orders/:id
+export const getAdminOrderById = async (req, res) => {
+  try {
+    // 1. Validate order ID
+    const orderId = Number(req.params.id);
+
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID.",
+      });
+    }
+
+    // 2. Fetch order with customer and item details
+    const order = await prisma.order.findUnique({
+      where: {
+        id: orderId,
+      },
+
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+
+        items: true,
+      },
+    });
+
+    // 3. Handle order not found
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    // 4. Return complete order details
+    return res.status(200).json({
+      success: true,
+      message: "Order details retrieved successfully.",
+      order,
+    });
+
+  } catch (error) {
+    console.error("Get admin order details error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to retrieve order details.",
+    });
+  }
+};
