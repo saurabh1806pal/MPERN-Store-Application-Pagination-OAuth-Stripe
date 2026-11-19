@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import api from "../services/api";
 import ProductCard from "../components/products/ProductCard";
+import HeroCarousel from "../components/layout/HeroCarousel";
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -38,22 +39,7 @@ const Home = () => {
   return (
     <main>
       {/* Hero Section */}
-      <section className="px-8 py-20 text-center bg-gray-100">
-        <h1 className="text-4xl font-bold mb-4">
-          Welcome to MPERN Store
-        </h1>
-
-        <p className="text-gray-600 text-lg mb-8">
-          Discover quality products at the best prices.
-        </p>
-
-        <Link
-          to="/products"
-          className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800"
-        >
-          Shop Now
-        </Link>
-      </section>
+        <HeroCarousel/>
 
       {/* Featured Products */}
       <section className="px-8 py-12">

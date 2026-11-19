@@ -183,7 +183,7 @@ export const loginUser = async (req, res) => {
         {userId: user.id},
         process.env.JWT_SECRET,
         {
-          expiresIn: "15m", // Token expires in 15 minutes
+          expiresIn: "1d", // Token expires in 15 minutes. // a Change has been done here
           issuer: "mpern-store",
           audience: "mpern-store-client"
         }
@@ -193,7 +193,7 @@ export const loginUser = async (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production", // Use secure cookies in production
         sameSite: "lax", // Adjust based on your frontend domain
-        maxAge: 15 * 60 * 1000, // 15 minutes
+        maxAge: 24 * 60 * 60 * 1000, // 15 minutes // Change required
         path: "/",
       })
 
