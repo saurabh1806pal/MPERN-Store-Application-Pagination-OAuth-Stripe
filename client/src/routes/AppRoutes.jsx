@@ -18,6 +18,8 @@ import AdminCreateProduct from "../pages/admin/AdminCreateProduct";
 import AdminEditProduct from "../pages/admin/AdminEditProduct";
 import AdminOrders from "../pages/admin/AdminOrders";
 import AdminOrderDetails from "../pages/admin/AdminOrderDetails";
+import AdminCustomers from "../pages/admin/AdminCustomers";
+import AdminCustomersDetails from "../pages/admin/AdminCustomersDetails";
 
 // Import the ProtectedRoutes component
 import ProtectedRoutes from "./ProtectedRoutes.jsx";
@@ -54,6 +56,8 @@ function AppRoutes() {
         <Route path="/admin/products/create" element={<AdminCreateProduct />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
         <Route path="/admin/orders/:id" element={<AdminOrderDetails />} />
+        <Route path="/admin/customers" element={<AdminCustomers />} />
+        <Route path="/admin/users/:id" element={<AdminCustomersDetails />}/>
         {/* Edit Product */}
         <Route path="/admin/products/:id/edit" element={<AdminEditProduct />} />
       </Route>

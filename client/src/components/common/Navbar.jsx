@@ -233,6 +233,9 @@ function Navbar() {
               <NavLink to="/admin/orders" className={navLinkClass}>
                 View Orders
               </NavLink>
+              <NavLink to="/admin/customers" className={navLinkClass}>
+                Customer Management
+              </NavLink>
             </>
           )}
         </div>

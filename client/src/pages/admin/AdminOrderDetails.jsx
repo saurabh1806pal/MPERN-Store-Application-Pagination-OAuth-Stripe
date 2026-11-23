@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -10,7 +11,6 @@ import {
   RefreshCw,
   AlertCircle,
   Truck,
-  ShieldCheck,
 } from "lucide-react";
 
 import api from "../../services/api";
@@ -80,9 +80,7 @@ function AdminOrderDetails() {
   const [error, setError] = useState("");
 
   const [updatingOrderStatus, setUpdatingOrderStatus] = useState(false);
-  const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState(false);
   const [orderStatusMessage, setOrderStatusMessage] = useState("");
-  const [paymentStatusMessage, setPaymentStatusMessage] = useState("");
 
   const fetchOrder = async () => {
     try {
@@ -136,36 +134,6 @@ function AdminOrderDetails() {
     }
   };
 
-  const handlePaymentFailureUpdate = async () => {
-    const confirmed = window.confirm(
-      "Only continue if you have independently verified in Razorpay that this payment attempt failed. Mark this payment as FAILED?"
-    );
-
-    if (!confirmed) return;
-
-    try {
-      setUpdatingPaymentStatus(true);
-      setPaymentStatusMessage("");
-
-      const response = await api.patch(`/admin/orders/${id}/payment`, {
-        paymentStatus: "FAILED",
-      });
-
-      setOrder(response.data.order);
-      setPaymentStatusMessage(
-        response.data.message || "Payment status updated successfully."
-      );
-    } catch (err) {
-      console.error("Update payment status error:", err);
-      setPaymentStatusMessage(
-        err.response?.data?.message ||
-          "Unable to update payment status. Please try again."
-      );
-    } finally {
-      setUpdatingPaymentStatus(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -174,7 +142,9 @@ function AdminOrderDetails() {
             size={30}
             className="mx-auto mb-3 animate-spin text-blue-600"
           />
-          <p className="text-sm text-gray-500">Loading order details...</p>
+          <p className="text-sm text-gray-500">
+            Loading order details...
+          </p>
         </div>
       </div>
     );
@@ -220,11 +190,6 @@ function AdminOrderDetails() {
   const customerName = order.fullName || order.user?.name || "N/A";
   const items = order.items || [];
   const nextOrderStatus = orderStatusTransitions[order.status];
-
-  // The admin UI deliberately does not offer PAID or REFUNDED actions.
-  // PAID must come from verified Razorpay payment capture, and REFUNDED
-  // must come from a successful Razorpay refund operation.
-  const canMarkPaymentFailed = order.paymentStatus === "PENDING";
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -302,7 +267,10 @@ function AdminOrderDetails() {
                         </td>
 
                         <td className="px-5 py-4 text-sm text-gray-600">
-                          {formatCurrency(item.productPrice, order.currency)}
+                          {formatCurrency(
+                            item.productPrice,
+                            order.currency
+                          )}
                         </td>
 
                         <td className="px-5 py-4 text-sm text-gray-600">
@@ -381,7 +349,9 @@ function AdminOrderDetails() {
               </div>
 
               <div className="mb-4">
-                <p className="mb-2 text-sm text-gray-500">Current Status</p>
+                <p className="mb-2 text-sm text-gray-500">
+                  Current Status
+                </p>
                 <StatusBadge status={order.status} />
               </div>
 
@@ -389,7 +359,7 @@ function AdminOrderDetails() {
                 <button
                   type="button"
                   onClick={() => handleOrderStatusUpdate(nextOrderStatus)}
-                  disabled={updatingOrderStatus || updatingPaymentStatus}
+                  disabled={updatingOrderStatus}
                   className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {updatingOrderStatus
@@ -412,66 +382,27 @@ function AdminOrderDetails() {
               )}
             </section>
 
-            {/* Payment Status Management */}
+            {/* Payment Status - Read Only */}
             <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-3">
                 <CreditCard className="text-blue-600" size={20} />
                 <h2 className="font-semibold text-gray-900">
-                  Manage Payment Status
+                  Payment Status
                 </h2>
               </div>
 
               <div className="mb-4">
-                <p className="mb-2 text-sm text-gray-500">Current Status</p>
+                <p className="mb-2 text-sm text-gray-500">
+                  Current Status
+                </p>
                 <StatusBadge status={order.paymentStatus} />
               </div>
 
-              {canMarkPaymentFailed ? (
-                <>
-                  <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                    <p className="text-xs leading-5 text-amber-800">
-                      Only use this action after confirming in your Razorpay
-                      dashboard that the payment attempt failed. Do not use it
-                      for pending or processing payments.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handlePaymentFailureUpdate}
-                    disabled={updatingPaymentStatus || updatingOrderStatus}
-                    className="w-full rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {updatingPaymentStatus
-                      ? "Updating..."
-                      : "Mark Payment as Failed"}
-                  </button>
-                </>
-              ) : (
-                <p className="rounded-lg bg-gray-50 p-3 text-center text-sm text-gray-500">
-                  Payment status is managed by the verified payment workflow.
-                </p>
-              )}
-
-              <div className="mt-3 flex items-start gap-2 text-xs leading-5 text-gray-500">
-                <ShieldCheck
-                  size={16}
-                  className="mt-0.5 shrink-0 text-green-600"
-                />
-                <p>
-                  PAID is set after Razorpay payment verification. REFUNDED
-                  should be set only after a successful Razorpay refund.
-                </p>
-              </div>
-
-              {paymentStatusMessage && (
-                <p
-                  role="status"
-                  className="mt-3 text-sm text-gray-600"
-                >
-                  {paymentStatusMessage}
-                </p>
-              )}
+              <p className="rounded-lg bg-gray-50 p-3 text-sm leading-5 text-gray-600">
+                Payment status is updated automatically through verified
+                Razorpay payment and refund events. Administrators cannot
+                manually change payment status.
+              </p>
             </section>
 
             {/* Order Summary */}

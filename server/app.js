@@ -33,10 +33,6 @@ app.post(
   handleRazorpayWebhook
 );
 
-// Normal middleware comes afterwards.
-app.use(express.json());
-app.use(cookieParser());
-
 // Parse request bodies and cookies
 app.use(express.json());
 app.use(cookieParser());

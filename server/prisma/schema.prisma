@@ -52,6 +52,9 @@ model User {
   // Google authentication
   googleId String? @unique
 
+  // Active or Inactive Member
+  isActive Boolean @default(true)
+
   // Cart
   cart Cart?
 

@@ -85,6 +85,7 @@ export const UserScalarFieldEnum = {
   emailVerificationTokenExpiresAt: 'emailVerificationTokenExpiresAt',
   role: 'role',
   googleId: 'googleId',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

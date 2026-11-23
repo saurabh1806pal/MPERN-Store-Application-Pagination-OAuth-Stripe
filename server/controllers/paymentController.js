@@ -1,7 +1,7 @@
-import crypto from 'crypto';
+
+import crypto from "crypto";
 import { prisma } from "../config/prisma.js";
 import { razorpay } from "../config/razorpay.js";
-
 
 // POST /api/payments/create-order
 export const createRazorpayOrder = async (req, res) => {
@@ -16,7 +16,6 @@ export const createRazorpayOrder = async (req, res) => {
     const userId = req.user.id;
     const { orderId } = req.body;
 
-    // Validate application order ID
     const parsedOrderId = Number(orderId);
 
     if (!Number.isInteger(parsedOrderId) || parsedOrderId <= 0) {
@@ -26,7 +25,6 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
-    // Find the customer's order
     const order = await prisma.order.findFirst({
       where: {
         id: parsedOrderId,
@@ -44,7 +42,6 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
-    // Only unpaid pending orders can initiate payment
     if (
       order.status !== "PENDING" ||
       !["PENDING", "FAILED"].includes(order.paymentStatus)
@@ -55,7 +52,7 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
-    // Reuse an existing Razorpay order when available
+    // Reuse an existing Razorpay order.
     if (order.razorpayOrderId) {
       return res.status(200).json({
         success: true,
@@ -68,7 +65,6 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
-    // Calculate amount from the database
     const amount = Math.round(Number(order.totalAmount) * 100);
 
     if (!Number.isSafeInteger(amount) || amount <= 0) {
@@ -78,7 +74,6 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
-    // Create order with Razorpay
     const razorpayOrder = await razorpay.orders.create({
       amount,
       currency: order.currency.toUpperCase(),
@@ -89,7 +84,6 @@ export const createRazorpayOrder = async (req, res) => {
       },
     });
 
-    // Save Razorpay order ID in PostgreSQL
     await prisma.order.update({
       where: {
         id: order.id,
@@ -138,11 +132,11 @@ export const verifyRazorpayPayment = async (req, res) => {
       orderId,
     } = req.body;
 
-    // Validate required fields
+    // Validate required fields.
     if (
-      !razorpay_order_id ||
-      !razorpay_payment_id ||
-      !razorpay_signature ||
+      typeof razorpay_order_id !== "string" ||
+      typeof razorpay_payment_id !== "string" ||
+      typeof razorpay_signature !== "string" ||
       !orderId
     ) {
       return res.status(400).json({
@@ -160,7 +154,6 @@ export const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    // Find the customer's application order
     const order = await prisma.order.findFirst({
       where: {
         id: parsedOrderId,
@@ -175,7 +168,6 @@ export const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    // Ensure Razorpay Order ID matches our database
     if (order.razorpayOrderId !== razorpay_order_id) {
       return res.status(400).json({
         success: false,
@@ -183,7 +175,7 @@ export const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    // Handle duplicate verification requests
+    // Handle duplicate verification requests.
     if (order.paymentStatus === "PAID") {
       if (order.razorpayPaymentId === razorpay_payment_id) {
         return res.status(200).json({
@@ -206,13 +198,13 @@ export const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    // Generate expected HMAC signature
+    // Generate expected HMAC signature.
     const generatedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    // Compare signatures safely
+    // Compare signatures safely.
     const expectedBuffer = Buffer.from(generatedSignature, "hex");
     const receivedBuffer = Buffer.from(razorpay_signature, "hex");
 
@@ -228,12 +220,11 @@ export const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    // Fetch payment directly from Razorpay
+    // Fetch payment directly from Razorpay.
     const payment = await razorpay.payments.fetch(
       razorpay_payment_id
     );
 
-    // Verify payment belongs to the expected Razorpay Order
     if (payment.order_id !== razorpay_order_id) {
       return res.status(400).json({
         success: false,
@@ -241,7 +232,6 @@ export const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    // Verify amount and currency
     const expectedAmount = Math.round(
       Number(order.totalAmount) * 100
     );
@@ -256,7 +246,6 @@ export const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    // Only captured payments can confirm an order
     if (payment.status !== "captured") {
       return res.status(409).json({
         success: false,
@@ -264,7 +253,7 @@ export const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    // Update both statuses atomically
+    // Atomically update payment and order status.
     const result = await prisma.$transaction(async (tx) => {
       const updated = await tx.order.updateMany({
         where: {
@@ -305,7 +294,30 @@ export const verifyRazorpayPayment = async (req, res) => {
     });
 
   } catch (error) {
+    // Webhook may have confirmed the same payment first.
     if (error.message === "ORDER_UPDATE_CONFLICT") {
+      const currentOrder = await prisma.order.findFirst({
+        where: {
+          id: Number(req.body.orderId),
+          userId: req.user.id,
+        },
+        include: {
+          items: true,
+        },
+      });
+
+      if (
+        currentOrder?.paymentStatus === "PAID" &&
+        currentOrder?.razorpayPaymentId ===
+          req.body.razorpay_payment_id
+      ) {
+        return res.status(200).json({
+          success: true,
+          message: "Payment already verified.",
+          order: currentOrder,
+        });
+      }
+
       return res.status(409).json({
         success: false,
         message: "Order was already updated. Please refresh.",

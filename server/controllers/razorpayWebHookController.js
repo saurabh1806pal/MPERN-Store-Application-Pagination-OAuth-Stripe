@@ -1,3 +1,4 @@
+
 import crypto from "crypto";
 import { prisma } from "../config/prisma.js";
 
@@ -14,7 +15,10 @@ export const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
-    if (typeof signature !== "string" || !/^[a-f0-9]{64}$/i.test(signature)) {
+    if (
+      typeof signature !== "string" ||
+      !/^[a-f0-9]{64}$/i.test(signature)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Invalid webhook signature.",
@@ -43,15 +47,18 @@ export const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
-    // TEMPORARY DEBUG LOGS
-    console.log("Webhook Event ID:", req.headers["x-razorpay-event-id"]);
-
-    console.log("Webhook Signature:", req.headers["x-razorpay-signature"]);
-
-    console.log("Raw Webhook Body:", req.body.toString("utf8"));
-
     // 2. Parse body only after signature verification.
     const event = JSON.parse(req.body.toString("utf8"));
+
+    // 3. Ignore unsupported events before accessing payment details.
+    const supportedEvents = ["payment.captured", "payment.failed"];
+
+    if (!supportedEvents.includes(event.event)) {
+      return res.status(200).json({
+        success: true,
+        message: "Event ignored.",
+      });
+    }
 
     const payment = event.payload?.payment?.entity;
 
@@ -62,16 +69,7 @@ export const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
-    const supportedEvents = ["payment.captured", "payment.failed"];
-
-    if (!supportedEvents.includes(event.event)) {
-      return res.status(200).json({
-        success: true,
-        message: "Event ignored.",
-      });
-    }
-
-    // 3. Validate payment against our application order.
+    // 4. Validate payment against our application order.
     const order = await prisma.order.findUnique({
       where: {
         razorpayOrderId: payment.order_id,
@@ -97,16 +95,18 @@ export const handleRazorpayWebhook = async (req, res) => {
       });
     }
 
-    if (event.event === "payment.captured" && payment.status !== "captured") {
+    if (
+      event.event === "payment.captured" &&
+      payment.status !== "captured"
+    ) {
       return res.status(400).json({
         success: false,
         message: "Payment is not captured.",
       });
     }
 
-    // 4. Atomically record the event and update the order.
+    // 5. Atomically record the event and update the order.
     await prisma.$transaction(async (tx) => {
-      // Unique eventId prevents duplicate processing.
       await tx.webhookEvent.create({
         data: {
           eventId,
@@ -134,7 +134,6 @@ export const handleRazorpayWebhook = async (req, res) => {
           },
         });
 
-        // Do not silently discard an unexpected state conflict.
         if (result.count === 0) {
           const currentOrder = await tx.order.findUnique({
             where: { id: order.id },
@@ -145,7 +144,9 @@ export const handleRazorpayWebhook = async (req, res) => {
             currentOrder?.razorpayPaymentId === payment.id;
 
           if (!alreadyProcessed) {
-            throw new Error("Order could not be updated for captured payment.");
+            throw new Error(
+              "Order could not be updated for captured payment."
+            );
           }
         }
       }
@@ -169,8 +170,6 @@ export const handleRazorpayWebhook = async (req, res) => {
       message: "Webhook processed successfully.",
     });
   } catch (error) {
-    // P2002 means a unique constraint was violated.
-    // For our eventId constraint, this means a duplicate delivery.
     if (error.code === "P2002") {
       return res.status(200).json({
         success: true,
