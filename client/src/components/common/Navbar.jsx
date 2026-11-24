@@ -228,7 +228,7 @@ function Navbar() {
                 View Inventory
               </NavLink>
               <NavLink to="/admin/products/create" className={navLinkClass}>
-                Create Order
+                Create Product
               </NavLink>
               <NavLink to="/admin/orders" className={navLinkClass}>
                 View Orders
