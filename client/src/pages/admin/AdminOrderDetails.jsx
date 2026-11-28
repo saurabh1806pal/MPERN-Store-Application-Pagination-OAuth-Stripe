@@ -83,26 +83,55 @@ function AdminOrderDetails() {
   const [orderStatusMessage, setOrderStatusMessage] = useState("");
 
   const fetchOrder = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  try {
+    const response = await api.get(`/admin/orders/${id}`);
+    setOrder(response.data.order);
+    setError("");
+  } catch (err) {
+    console.error("Fetch admin order details error:", err);
+    setOrder(null);
+    setError(
+      err.response?.data?.message ||
+        "Unable to retrieve order details."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
+useEffect(() => {
+  let ignore = false;
+
+  const loadOrder = async () => {
+    try {
       const response = await api.get(`/admin/orders/${id}`);
-      setOrder(response.data.order);
+
+      if (!ignore) {
+        setOrder(response.data.order);
+        setError("");
+      }
     } catch (err) {
-      console.error("Fetch admin order details error:", err);
-      setError(
-        err.response?.data?.message ||
-          "Unable to retrieve order details."
-      );
+      if (!ignore) {
+        console.error("Fetch admin order details error:", err);
+        setOrder(null);
+        setError(
+          err.response?.data?.message ||
+            "Unable to retrieve order details."
+        );
+      }
     } finally {
-      setLoading(false);
+      if (!ignore) {
+        setLoading(false);
+      }
     }
   };
 
-  useEffect(() => {
-    fetchOrder();
-  }, [id]);
+  loadOrder();
+
+  return () => {
+    ignore = true;
+  };
+}, [id]);
 
   const handleOrderStatusUpdate = async (newStatus) => {
     const confirmed = window.confirm(
@@ -169,11 +198,14 @@ function AdminOrderDetails() {
 
           <div className="mt-5 flex justify-center gap-3">
             <button
-              onClick={fetchOrder}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Try Again
-            </button>
+  onClick={() => {
+    setLoading(true);
+    setError("");
+    fetchOrder();
+  }}
+>
+  Try Again
+</button>
 
             <Link
               to="/admin/orders"

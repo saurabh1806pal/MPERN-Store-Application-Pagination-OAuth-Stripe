@@ -43,7 +43,7 @@ const AdminProducts = () => {
                     search,
                     category,
                     sortBy,
-                    order: sortOrder,
+                    order: sortOrder
                 });
 
                 setTotalPages(response.totalPages || 1);
@@ -53,7 +53,7 @@ const AdminProducts = () => {
         };
 
         loadProducts();
-    }, [page, search, category, sortBy, sortOrder]);
+    }, [page, search, category, sortBy, sortOrder, fetchProducts]);
 
     const handleSearch = (value) => {
         setSearch(value);

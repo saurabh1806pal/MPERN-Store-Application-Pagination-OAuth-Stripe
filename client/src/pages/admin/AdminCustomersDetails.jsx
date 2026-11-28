@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -105,36 +105,78 @@ function AdminCustomersDetails() {
   const [customer, setCustomer] = useState(null);
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadedForId, setLoadedForId] = useState(null);
   const [error, setError] = useState("");
   const [showStatusPrompt, setShowStatusPrompt] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusError, setStatusError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
 
-  const fetchCustomer = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const fetchCustomer = useCallback(async () => {
+  try {
+    const response = await api.get(`/admin/users/${id}`);
 
+    setCustomer(response.data.customer);
+    setStatistics(response.data.statistics);
+    setError("");
+  } catch (err) {
+    console.error("Fetch customer details error:", err);
+    setCustomer(null);
+    setStatistics(null);
+    setError(
+      err.response?.data?.message ||
+        "Unable to retrieve customer details. Please try again."
+    );
+  } finally {
+    setLoadedForId(id);
+    setLoading(false);
+  }
+}, [id]);
+
+useEffect(() => {
+  let ignore = false;
+
+  const loadCustomer = async () => {
+    try {
       const response = await api.get(`/admin/users/${id}`);
-      setCustomer(response.data.customer);
-      setStatistics(response.data.statistics);
+
+      if (!ignore) {
+        setCustomer(response.data.customer);
+        setStatistics(response.data.statistics);
+        setError("");
+      }
     } catch (err) {
-      console.error("Fetch customer details error:", err);
-      setCustomer(null);
-      setStatistics(null);
-      setError(
-        err.response?.data?.message ||
-          "Unable to retrieve customer details. Please try again."
-      );
+      if (!ignore) {
+        console.error("Fetch customer details error:", err);
+        setCustomer(null);
+        setStatistics(null);
+        setError(
+          err.response?.data?.message ||
+            "Unable to retrieve customer details. Please try again."
+        );
+      }
     } finally {
-      setLoading(false);
+      if (!ignore) {
+        setLoadedForId(id);
+        setLoading(false);
+      }
     }
   };
 
-  useEffect(() => {
-    fetchCustomer();
-  }, [id]);
+  loadCustomer();
+
+  return () => {
+    ignore = true;
+  };
+}, [id]);
+
+const isLoading = loading || loadedForId !== id;
+
+const handleRefresh = () => {
+  setLoading(true);
+  setError("");
+  fetchCustomer();
+};
 
   const handleStatusChange = async () => {
     if (!customer) return;
@@ -170,7 +212,7 @@ function AdminCustomersDetails() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
@@ -198,7 +240,7 @@ function AdminCustomersDetails() {
           <div className="mt-5 flex justify-center gap-3">
             <button
               type="button"
-              onClick={fetchCustomer}
+              onClick={handleRefresh}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
               Try Again
@@ -332,8 +374,8 @@ function AdminCustomersDetails() {
 
             <button
               type="button"
-              onClick={fetchCustomer}
-              disabled={loading}
+              onClick={handleRefresh}
+              disabled={isLoading}
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
             >
               <RefreshCw size={16} />

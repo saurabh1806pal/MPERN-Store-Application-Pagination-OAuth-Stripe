@@ -25,24 +25,6 @@ const PERIOD_OPTIONS = [
   { label: "All Time", value: "all" },
 ];
 
-const ORDER_STATUSES = [
-  "PENDING",
-  "CONFIRMED",
-  "PROCESSING",
-  "SHIPPED",
-  "DELIVERED",
-  "CANCELLED",
-];
-
-const PAYMENT_STATUSES = [
-  "PAID",
-  "PENDING",
-  "FAILED",
-  "PARTIALLY_REFUNDED",
-  "REFUNDED",
-];
-
-const REFUND_STATUSES = ["PROCESSED", "PENDING", "FAILED"];
 
 const formatCurrency = (value, currency = "INR") =>
   new Intl.NumberFormat("en-IN", {
@@ -156,14 +138,14 @@ const AnalyticsChart = ({ title, data, dataKey, formatter }) => {
               return (
                 <div
                   key={item.date}
-                  className="flex min-w-[42px] flex-1 flex-col items-center"
+                  className="flex min-w-10.5 flex-1 flex-col items-center"
                 >
                   <span className="mb-2 max-w-full truncate text-[10px] text-gray-500">
                     {formatter(value)}
                   </span>
 
                   <div
-                    className="flex h-[150px] w-full items-end justify-center"
+                    className="flex h-37.5 w-full items-end justify-center"
                     title={`${item.label}: ${formatter(value)}`}
                   >
                     <div
@@ -230,30 +212,65 @@ function AdminDashboard() {
   const [message, setMessage] = useState("");
 
   const fetchDashboard = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
+  try {
+    const response = await api.get("/admin/dashboard", {
+      params: { period },
+    });
 
+    setDashboard(response.data.dashboard);
+    setError("");
+  } catch (err) {
+    console.error("Admin dashboard error:", err);
+
+    setError(
+      err.response?.data?.message ||
+        "Unable to load dashboard data."
+    );
+  } finally {
+    setLoading(false);
+  }
+}, [period]);
+
+  useEffect(() => {
+  let ignore = false;
+
+  const loadDashboard = async () => {
+    try {
       const response = await api.get("/admin/dashboard", {
         params: { period },
       });
 
-      setDashboard(response.data.dashboard);
+      if (!ignore) {
+        setDashboard(response.data.dashboard);
+        setError("");
+      }
     } catch (err) {
-      console.error("Admin dashboard error:", err);
-
-      setError(
-        err.response?.data?.message ||
-          "Unable to load dashboard data."
-      );
+      if (!ignore) {
+        console.error("Admin dashboard error:", err);
+        setError(
+          err.response?.data?.message ||
+            "Unable to load dashboard data."
+        );
+      }
     } finally {
-      setLoading(false);
+      if (!ignore) {
+        setLoading(false);
+      }
     }
-  }, [period]);
+  };
 
-  useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+  loadDashboard();
+
+  return () => {
+    ignore = true;
+  };
+}, [period]);
+
+const handleDashboardRefresh = () => {
+  setLoading(true);
+  setError("");
+  fetchDashboard();
+};
 
   const handleSync = async () => {
     try {
@@ -300,7 +317,7 @@ function AdminDashboard() {
         <div className="rounded-xl border border-red-200 bg-red-50 p-5">
           <p className="font-semibold text-red-700">{error}</p>
           <button
-            onClick={fetchDashboard}
+            onClick={handleDashboardRefresh}
             className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
           >
             Try Again
@@ -354,7 +371,11 @@ function AdminDashboard() {
 
               <select
                 value={period}
-                onChange={(e) => setPeriod(e.target.value)}
+                onChange={(e) => {
+  setLoading(true);
+  setError("");
+  setPeriod(e.target.value);
+}}
                 className="bg-transparent text-sm font-medium text-gray-700 outline-none"
               >
                 {PERIOD_OPTIONS.map((option) => (
@@ -366,7 +387,7 @@ function AdminDashboard() {
             </div>
 
             <button
-              onClick={fetchDashboard}
+              onClick={handleDashboardRefresh}
               disabled={loading}
               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
@@ -504,7 +525,7 @@ function AdminDashboard() {
                 <EmptyState message="No orders found for this period." />
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[760px] text-left text-sm">
+                  <table className="w-full min-w-190 text-left text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
                         <th className="pb-3 pr-4 font-semibold">Order</th>

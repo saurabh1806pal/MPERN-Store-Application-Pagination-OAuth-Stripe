@@ -6,17 +6,18 @@ import api from "../services/api";
 import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
+const EMPTY_CART = {
+  id: null,
+  items: [],
+  totalItems: 0,
+  subtotal: 0
+};
 
 export const CartProvider = ({children}) => {
     const {user, loading: authLoading} = useAuth();
 
     // Cart States
-    const [cart, setCart] = useState({
-        id: null,
-        items: [],
-        totalItems: 0,
-        subtotal: 0
-    })
+    const [cart, setCart] = useState(EMPTY_CART)
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -148,32 +149,50 @@ export const CartProvider = ({children}) => {
   // Initiate the Cart
 
   useEffect(() => {
-    if (authLoading) return;
+  if (authLoading || !user) return;
 
-    if(user){
-        fetchCart().catch(() => {})
-    }else{
-        setCart({
-            id: null,
-            items: [],
-            totalItems: 0,
-            subtotal: 0
-        })
-        setError("")
-        setLoading(false)
+  let ignore = false;
+
+  const loadCart = async () => {
+    try {
+      const response = await api.get("/cart");
+
+      if (!ignore) {
+        setCart(response.data.cart);
+      }
+    } catch (error) {
+      if (!ignore) {
+        setError(
+          error.response?.data?.message || "Unable to Fetch Cart"
+        );
+      }
     }
-  }, [user, authLoading, fetchCart]);
+  };
+
+  loadCart();
+
+  return () => {
+    ignore = true;
+  };
+}, [user, authLoading]);
 
   const value = {
-    cart, loading, error, fetchCart, addToCart, updateCartItem, removeCartItem, clearCart
-  };
+  cart: user ? cart : EMPTY_CART,
+  loading: user ? loading : false,
+  error: user ? error : "",
+  fetchCart,
+  addToCart,
+  updateCartItem,
+  removeCartItem,
+  clearCart
+};
 
   return (
     <CartContext.Provider value = {value}>  {children}</CartContext.Provider>
   )
 
 }
-
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCart = () => {
     const context = useContext(CartContext);
 

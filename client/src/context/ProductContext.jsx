@@ -10,22 +10,22 @@ export const ProductProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   // Fetch all products
-  const fetchProducts = async (params = {}) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchProducts = useCallback(async (params = {}) => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const response = await api.get("/products", { params });
+    const response = await api.get("/products", { params });
 
-      setProducts(response.data.products);
-      return response.data;
-    } catch (error) {
-      setError(error.response?.data?.message || "Failed to fetch products.");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
+    setProducts(response.data.products);
+    return response.data;
+  } catch (error) {
+    setError(error.response?.data?.message || "Failed to fetch products.");
+    throw error;
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   // Fetch single product
 const fetchProductById = useCallback(async (id) => {
@@ -163,6 +163,7 @@ const fetchProductById = useCallback(async (id) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useProducts = () => {
   const context = useContext(ProductContext);
 

@@ -436,7 +436,7 @@ function AdminOrders() {
         {/* Orders Table */}
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left">
+            <table className="w-full min-w-225 text-left">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">

@@ -56,20 +56,7 @@ const AdminStockManagement = () => {
         };
 
         loadProducts();
-    }, [page, search]);
-
-    // Initialize editable quantities whenever products change.
-    useEffect(() => {
-        const initialQuantities = {};
-
-        products.forEach((product) => {
-            initialQuantities[product._id] = String(
-                product.quantity
-            );
-        });
-
-        setQuantities(initialQuantities);
-    }, [products]);
+    }, [page, search, fetchProducts]);
 
     const handleSearch = (value) => {
         setSearch(value);
@@ -110,7 +97,7 @@ const AdminStockManagement = () => {
     };
 
     const handleUpdateStock = async (product) => {
-        const rawQuantity = quantities[product._id];
+        const rawQuantity = quantities[product._id] ?? String(product.quantity);
 
         if (
             rawQuantity === "" ||
@@ -193,7 +180,7 @@ const AdminStockManagement = () => {
             });
 
             setTotalPages(response.totalPages || 1);
-        } catch (refreshError) {
+        } catch {
             setUpdateError(
                 "Unable to refresh products. Please try again."
             );
@@ -290,7 +277,7 @@ const AdminStockManagement = () => {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[850px] text-left text-sm">
+                        <table className="w-full min-w-212.5 text-left text-sm">
 
                             <thead className="border-b bg-gray-50 text-gray-500">
                                 <tr>
@@ -366,7 +353,7 @@ const AdminStockManagement = () => {
                                                     min="0"
                                                     step="1"
                                                     value={
-                                                        quantities[product._id] ?? ""
+                                                        quantities[product._id] ?? String(product.quantity)
                                                     }
                                                     onChange={(event) =>
                                                         handleQuantityChange(
@@ -388,7 +375,7 @@ const AdminStockManagement = () => {
                                                     }
                                                     disabled={
                                                         isUpdating ||
-                                                        String(quantities[product._id]) ===
+                                                        String(quantities[product._id] ?? product.quantity) ===
                                                             String(product.quantity)
                                                     }
                                                     className="flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"

@@ -140,7 +140,7 @@ export const PaymentProvider = ({ children }) => {
     </PaymentContext.Provider>
   );
 };
-
+// eslint-disable-next-line react-refresh/only-export-components
 export const usePayment = () => {
   const context = useContext(PaymentContext);
 

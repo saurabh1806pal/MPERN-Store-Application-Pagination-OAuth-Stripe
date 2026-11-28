@@ -173,6 +173,7 @@ export const OrderProvider = ({ children }) => {
 };
 
 // Custom hook
+// eslint-disable-next-line react-refresh/only-export-components
 export const useOrder = () => {
   const context = useContext(OrderContext);
 
