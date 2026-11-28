@@ -192,7 +192,7 @@ export const loginUser = async (req, res) => {
       res.cookie("accessToken", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-        sameSite: "lax", // Adjust based on your frontend domain
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Adjust based on your frontend domain
         maxAge: 24 * 60 * 60 * 1000, // 15 minutes // Change required
         path: "/",
       })
