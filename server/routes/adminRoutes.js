@@ -5,7 +5,8 @@ import {
   getAllUsers,
   getUserById,
   updateCustomerStatus,
-  reconcilePayments
+  reconcilePayments,
+  getAdminDashboard
 } from "../controllers/adminController.js";
 
 import {
@@ -23,6 +24,9 @@ const router = express.Router();
 
 // All admin APIs require authentication and ADMIN role
 router.use(authenticateUser, authorizeRole("ADMIN"));
+
+// ADMIN DASHBOARD
+router.get("/dashboard", getAdminDashboard);
 
 // USER MANAGEMENT
 router.get("/users", getAllUsers);

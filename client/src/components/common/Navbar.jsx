@@ -4,7 +4,7 @@ import { useNavigate, useLocation, NavLink, Link } from "react-router-dom";
 import { ShoppingBag, LogOut, ChevronDown } from "lucide-react";
 
 const navLinkClass = ({ isActive }) =>
-  `relative py-2 text-[13px] tracking-wide transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-px after:transition-colors ${
+  `relative whitespace-nowrap py-2 text-[13px] tracking-wide transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-px after:transition-colors ${
     isActive
       ? "font-medium text-stone-900 after:bg-stone-900"
       : "text-stone-500 after:bg-transparent hover:text-stone-900"
@@ -183,7 +183,7 @@ function Navbar() {
   const adminMode = isAdmin && pathname.startsWith("/admin");
 
   const handleModeChange = (toAdmin) => {
-    navigate(toAdmin ? "/admin/products" : "/");
+    navigate(toAdmin ? "/admin" : "/");
   };
 
   const handleLogout = async () => {
@@ -197,12 +197,15 @@ function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-stone-200 bg-[#faf8f4]/90 font-sans backdrop-blur">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 items-center gap-y-2 px-4 py-3 sm:px-6 md:grid-cols-[1fr_auto_1fr]">
-        {/* Left: brand + mode toggle */}
-        <div className="flex items-center gap-4">
+      {/* Full width (no max-w) so the left/right groups hug the screen edges.
+          Below lg: brand + actions on row 1, links on row 2.
+          lg and up: left | center | right in a single row. */}
+      <div className="grid w-full grid-cols-2 items-center gap-y-2 px-4 py-3 sm:px-6 lg:grid-cols-[1fr_auto_1fr] lg:px-8">
+        {/* Left: brand + mode toggle (extreme left) */}
+        <div className="flex items-center justify-self-start gap-4">
           <Link
             to="/"
-            className="text-[15px] font-semibold tracking-tight text-stone-900"
+            className="whitespace-nowrap text-[15px] font-semibold tracking-tight text-stone-900"
           >
             My Store
           </Link>
@@ -211,8 +214,8 @@ function Navbar() {
           )}
         </div>
 
-        {/* Center: links (own row on mobile, truly centered on desktop) */}
-        <div className="col-span-2 row-start-2 flex items-center justify-center gap-8 md:col-span-1 md:col-start-2 md:row-start-1">
+        {/* Center: links (own row below lg, truly centered on lg+) */}
+        <div className="col-span-2 row-start-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:flex-nowrap xl:gap-x-7">
           {!adminMode ? (
             <>
               <NavLink to="/" end className={navLinkClass}>
@@ -224,8 +227,11 @@ function Navbar() {
             </>
           ) : (
             <>
+              <NavLink to="/admin" end className={navLinkClass}>
+                Admin Dashboard
+              </NavLink>
               <NavLink to="/admin/products" end className={navLinkClass}>
-                View Inventory
+                Inventory Management
               </NavLink>
               <NavLink to="/admin/inventory" end className={navLinkClass}>
                 Stock Management
@@ -234,7 +240,7 @@ function Navbar() {
                 Create Product
               </NavLink>
               <NavLink to="/admin/orders" className={navLinkClass}>
-                View Orders
+                Order Management
               </NavLink>
               <NavLink to="/admin/customers" className={navLinkClass}>
                 Customer Management
@@ -243,8 +249,8 @@ function Navbar() {
           )}
         </div>
 
-        {/* Right: orders, cart, profile */}
-        <div className="flex items-center justify-end gap-3 md:col-start-3">
+        {/* Right: orders, cart, profile (extreme right) */}
+        <div className="flex items-center justify-self-end gap-3 lg:col-start-3">
           {user ? (
             <>
               {!adminMode && (
