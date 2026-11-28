@@ -4,7 +4,8 @@ import express from "express";
 import {
   getAllUsers,
   getUserById,
-  updateCustomerStatus
+  updateCustomerStatus,
+  reconcilePayments
 } from "../controllers/adminController.js";
 
 import {
@@ -33,5 +34,7 @@ router.get("/orders", getAllOrders);
 router.get("/orders/:id", getAdminOrderById);
 router.patch("/orders/:id/status", updateOrderStatus);
 // router.patch("/orders/:id/payment", updatePaymentStatus);
+// PAYMENT & REFUND RECONCILIATION
+router.post("/payments/reconcile", reconcilePayments);
 
 export default router;

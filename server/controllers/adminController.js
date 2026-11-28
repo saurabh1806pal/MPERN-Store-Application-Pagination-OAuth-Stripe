@@ -1,5 +1,6 @@
 
 import { prisma } from "../config/prisma.js";
+import { reconcileAllPayments } from "../services/paymentReconciliationService.js";
 
 // GET /api/admin/users
 export const getAllUsers = async (req, res) => {
@@ -330,6 +331,30 @@ export const updateCustomerStatus = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Unable to update customer status",
+    });
+  }
+};
+
+
+// POST /api/admin/payments/reconcile
+// Synchronize payment and refund records with Razorpay
+export const reconcilePayments = async (req, res) => {
+  try {
+    const summary = await reconcileAllPayments({
+      dryRun: false,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment and refund reconciliation completed.",
+      data: summary,
+    });
+  } catch (error) {
+    console.error("Admin payment reconciliation error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to complete payment reconciliation.",
     });
   }
 };

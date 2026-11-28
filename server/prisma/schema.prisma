@@ -31,6 +31,13 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
 }
 
 model User {
@@ -118,8 +125,9 @@ model Order {
   paymentStatus PaymentStatus @default(PENDING)
 
   // Relationships
-  user  User        @relation(fields: [userId], references: [id], onDelete: Restrict)
-  items OrderItem[]
+  user    User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items   OrderItem[]
+  refunds Refund[]
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -152,7 +160,6 @@ model OrderItem {
   @@index([productId])
 }
 
-
 model WebhookEvent {
   id          Int      @id @default(autoincrement())
   eventId     String   @unique
@@ -161,4 +168,37 @@ model WebhookEvent {
   createdAt   DateTime @default(now())
 
   @@index([eventType])
+}
+
+model Refund {
+  id Int @id @default(autoincrement())
+
+  orderId Int
+
+  // Razorpay references
+  razorpayRefundId  String? @unique
+  razorpayPaymentId String
+
+  // Unique identifier for our refund request
+  requestKey String @unique
+
+  // Refund financial information
+  amount   Decimal @db.Decimal(10, 2)
+  currency String  @default("INR")
+
+  // Refund lifecycle
+  status RefundStatus @default(PENDING)
+
+  failureReason String?
+  processedAt   DateTime?
+
+  // Relationship
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId, createdAt])
+  @@index([razorpayPaymentId])
+  @@index([status])
 }

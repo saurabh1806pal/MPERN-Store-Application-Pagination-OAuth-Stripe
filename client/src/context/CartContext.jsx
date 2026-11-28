@@ -24,22 +24,35 @@ export const CartProvider = ({children}) => {
 
 
     // fetch cart items
-    const fetchCart = useCallback(async () => {
-        if(!user) return null;
-        try{
-            setLoading(true);
-            setError("")
-            const response = await api.get("/cart");
-            setCart(response.data.cart);
-            return response.data.cart;
+    const fetchCart = useCallback(async ({ silent = false } = {}) => {
+    if (!user) return null;
 
-        }catch(error){
-            setError(error.response?.data?.message || "Unable to Fetch Cart")
-            throw error;
-        }finally{
-            setLoading(false)
+    try {
+        if (!silent) {
+            setLoading(true);
+            setError("");
         }
-    }, [user]);
+
+        const response = await api.get("/cart");
+        setCart(response.data.cart);
+
+        return response.data.cart;
+
+    } catch (error) {
+        if (!silent) {
+            setError(
+                error.response?.data?.message || "Unable to Fetch Cart"
+            );
+        }
+
+        throw error;
+
+    } finally {
+        if (!silent) {
+            setLoading(false);
+        }
+    }
+}, [user]);
 
 
     // Add Product to Cart
@@ -53,7 +66,7 @@ export const CartProvider = ({children}) => {
             setCart(response.data.cart)
             return response.data
         }catch(error){
-            setError(error.response?.data?.message || "Unable to add product into the Cart");
+            console.log(error);
             throw error;
         }
     }

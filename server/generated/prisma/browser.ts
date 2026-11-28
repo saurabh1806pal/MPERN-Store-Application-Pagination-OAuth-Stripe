@@ -47,3 +47,8 @@ export type OrderItem = Prisma.OrderItemModel
  * 
  */
 export type WebhookEvent = Prisma.WebhookEventModel
+/**
+ * Model Refund
+ * 
+ */
+export type Refund = Prisma.RefundModel
