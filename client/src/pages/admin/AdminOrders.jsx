@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -8,6 +9,7 @@ import {
   ArrowUpDown,
   Package,
   AlertCircle,
+  CheckCircle,
 } from "lucide-react";
 
 import api from "../../services/api";
@@ -21,7 +23,13 @@ const ORDER_STATUSES = [
   "CANCELLED",
 ];
 
-const PAYMENT_STATUSES = ["PENDING", "PAID", "FAILED", "REFUNDED"];
+const PAYMENT_STATUSES = [
+  "PENDING",
+  "PAID",
+  "FAILED",
+  "PARTIALLY_REFUNDED",
+  "REFUNDED",
+];
 
 const statusStyles = {
   PENDING: "bg-yellow-100 text-yellow-800",
@@ -32,6 +40,7 @@ const statusStyles = {
   CANCELLED: "bg-red-100 text-red-800",
   PAID: "bg-green-100 text-green-800",
   FAILED: "bg-red-100 text-red-800",
+  PARTIALLY_REFUNDED: "bg-orange-100 text-orange-800",
   REFUNDED: "bg-orange-100 text-orange-800",
 };
 
@@ -69,6 +78,7 @@ const StatusBadge = ({ status }) => {
 
 function AdminOrders() {
   const [orders, setOrders] = useState([]);
+
   const [pagination, setPagination] = useState({
     currentPage: 1,
     limit: 10,
@@ -86,6 +96,9 @@ function AdminOrders() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [reconciling, setReconciling] = useState(false);
+  const [reconciliationMessage, setReconciliationMessage] = useState("");
 
   // Fetch orders from the backend
   const fetchOrders = async (page = 1) => {
@@ -108,6 +121,7 @@ function AdminOrders() {
       const data = response.data;
 
       setOrders(data.orders || []);
+
       setPagination(
         data.pagination || {
           currentPage: page,
@@ -116,7 +130,7 @@ function AdminOrders() {
           totalPages: 0,
           hasNextPage: false,
           hasPreviousPage: false,
-        },
+        }
       );
     } catch (err) {
       console.error("Fetch admin orders error:", err);
@@ -124,7 +138,7 @@ function AdminOrders() {
       setOrders([]);
       setError(
         err.response?.data?.message ||
-          "Unable to fetch orders. Please try again.",
+          "Unable to fetch orders. Please try again."
       );
     } finally {
       setLoading(false);
@@ -132,7 +146,6 @@ function AdminOrders() {
   };
 
   // Reload whenever filters or sorting change
-
   useEffect(() => {
     let ignore = false;
 
@@ -157,6 +170,7 @@ function AdminOrders() {
         const data = response.data;
 
         setOrders(data.orders || []);
+
         setPagination(
           data.pagination || {
             currentPage: 1,
@@ -165,7 +179,7 @@ function AdminOrders() {
             totalPages: 0,
             hasNextPage: false,
             hasPreviousPage: false,
-          },
+          }
         );
       } catch (err) {
         if (ignore) return;
@@ -175,7 +189,7 @@ function AdminOrders() {
         setOrders([]);
         setError(
           err.response?.data?.message ||
-            "Unable to fetch orders. Please try again.",
+            "Unable to fetch orders. Please try again."
         );
       } finally {
         if (!ignore) {
@@ -191,12 +205,14 @@ function AdminOrders() {
     };
   }, [search, status, paymentStatus, sortBy, sortOrder, pagination.limit]);
 
+  // Pagination
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > pagination.totalPages) return;
 
     fetchOrders(newPage);
   };
 
+  // Change page size
   const handleLimitChange = (event) => {
     const newLimit = Number(event.target.value);
 
@@ -207,13 +223,51 @@ function AdminOrders() {
     }));
   };
 
+  // Sorting
   const toggleSortOrder = () => {
-    setSortOrder((previous) => (previous === "asc" ? "desc" : "asc"));
+    setSortOrder((previous) =>
+      previous === "asc" ? "desc" : "asc"
+    );
+  };
+
+  // Synchronize payments and refunds with Razorpay
+  const handleReconciliation = async () => {
+    try {
+      setReconciling(true);
+      setReconciliationMessage("");
+      setError("");
+
+      const response = await api.post("/admin/payments/reconcile");
+
+      const summary = response.data.data;
+
+      const paymentsUpdated =
+        (summary.payments?.updated || 0) +
+        (summary.payments?.markedFailed || 0);
+
+      const refundsSynced = summary.refunds?.synced || 0;
+
+      setReconciliationMessage(
+        `Reconciliation completed! Payments updated: ${paymentsUpdated}, Refunds synced: ${refundsSynced}.`
+      );
+
+      await fetchOrders(pagination.currentPage);
+    } catch (err) {
+      console.error("Payment reconciliation error:", err);
+
+      setError(
+        err.response?.data?.message ||
+          "Unable to reconcile payments. Please try again."
+      );
+    } finally {
+      setReconciling(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
+
         {/* Header */}
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
@@ -226,15 +280,41 @@ function AdminOrders() {
             </p>
           </div>
 
-          <button
-            onClick={() => fetchOrders(pagination.currentPage)}
-            disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
-          >
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-            Refresh
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => fetchOrders(pagination.currentPage)}
+              disabled={loading || reconciling}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
+            >
+              <RefreshCw
+                size={16}
+                className={loading ? "animate-spin" : ""}
+              />
+              Refresh
+            </button>
+
+            <button
+              onClick={handleReconciliation}
+              disabled={reconciling || loading}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw
+                size={16}
+                className={reconciling ? "animate-spin" : ""}
+              />
+
+              {reconciling ? "Synchronizing..." : "Sync Payments"}
+            </button>
+          </div>
         </div>
+
+        {/* Reconciliation Success */}
+        {reconciliationMessage && (
+          <div className="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+            <CheckCircle size={20} />
+            {reconciliationMessage}
+          </div>
+        )}
 
         {/* Order Count */}
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -256,6 +336,7 @@ function AdminOrders() {
         {/* Search and Filters */}
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+
             {/* Search */}
             <div className="relative lg:col-span-2">
               <Search
@@ -297,7 +378,7 @@ function AdminOrders() {
 
               {PAYMENT_STATUSES.map((item) => (
                 <option key={item} value={item}>
-                  {item}
+                  {item.replaceAll("_", " ")}
                 </option>
               ))}
             </select>
@@ -305,7 +386,9 @@ function AdminOrders() {
 
           {/* Sorting */}
           <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4">
-            <span className="text-sm font-medium text-gray-600">Sort by:</span>
+            <span className="text-sm font-medium text-gray-600">
+              Sort by:
+            </span>
 
             <select
               value={sortBy}
@@ -353,7 +436,7 @@ function AdminOrders() {
         {/* Orders Table */}
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-225 text-left">
+            <table className="w-full min-w-[900px] text-left">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -379,6 +462,7 @@ function AdminOrders() {
                   <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Payment
                   </th>
+
                   <th className="px-5 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
                     Action
                   </th>
@@ -389,7 +473,7 @@ function AdminOrders() {
                 {loading ? (
                   <tr>
                     <td
-                      colSpan="6"
+                      colSpan="7"
                       className="px-5 py-16 text-center text-sm text-gray-500"
                     >
                       <RefreshCw
@@ -401,7 +485,7 @@ function AdminOrders() {
                   </tr>
                 ) : orders.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-5 py-16 text-center">
+                    <td colSpan="7" className="px-5 py-16 text-center">
                       <Package
                         size={32}
                         className="mx-auto mb-3 text-gray-300"
@@ -418,7 +502,10 @@ function AdminOrders() {
                   </tr>
                 ) : (
                   orders.map((order) => (
-                    <tr key={order.id} className="transition hover:bg-gray-50">
+                    <tr
+                      key={order.id}
+                      className="transition hover:bg-gray-50"
+                    >
                       <td className="px-5 py-4">
                         <span className="font-semibold text-gray-900">
                           #{order.id}
@@ -450,14 +537,15 @@ function AdminOrders() {
                       <td className="px-5 py-4">
                         <StatusBadge status={order.paymentStatus} />
                       </td>
+
                       <td className="px-5 py-4">
-                      <Link
-                        to={`/admin/orders/${order.id}`}
-                        className="font-medium text-blue-600 hover:text-blue-800"
-                      >
-                        View Details
-                      </Link>
-                    </td>
+                        <Link
+                          to={`/admin/orders/${order.id}`}
+                          className="font-medium text-blue-600 hover:text-blue-800"
+                        >
+                          View Details
+                        </Link>
+                      </td>
                     </tr>
                   ))
                 )}
