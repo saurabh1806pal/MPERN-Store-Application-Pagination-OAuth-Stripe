@@ -1,6 +1,8 @@
 import app from './app.js';
 import { connectMongo } from './config/mongo.js';
 import { prisma } from './config/prisma.js';
+import { startPaymentReconciliationJob } from "./jobs/paymentReconciliationJob.js";
+
 
 const PORT = process.env.PORT || 5050;
 
@@ -17,6 +19,8 @@ async function startServer(){
         // Start the Express Server
         app.listen(PORT, ()=> {
             console.log(`Server is running on port ${PORT}`);
+            // CRON JOBS
+            startPaymentReconciliationJob();
         })
     }catch(error){
         console.error("Server Startup failed: fileName: server.js", error);
