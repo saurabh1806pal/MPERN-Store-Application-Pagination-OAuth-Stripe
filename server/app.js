@@ -40,7 +40,7 @@ app.use(cookieParser());
 // Temporary session for OAuth state validation.
 // The default MemoryStore is suitable only for local development.
 if (!process.env.OAUTH_SESSION_SECRET) {
-  throw new Error("OAUTH_SESSION_SECRET is missing from server/.env");
+  throw new Error("OAUTH_SESSION_SECRET environment variable is missing");
 }
 
 app.use(
